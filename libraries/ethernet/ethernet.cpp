@@ -293,7 +293,7 @@ void EthernetClass::Task(void) {
   if (tcp_initialized < TCP_MAX){
 	  Tcp[tcp_initialized] = server.available();
 	  if (Tcp[tcp_initialized]) {
-      //    Serial.printf("\nUDP %d, TCP %d to %s:%d\n", eth_initialized, tcp_initialized, Tcp[tcp_initialized].remoteIP().toString().c_str(), Tcp[tcp_initialized].remotePort());
+      Serial.printf("\nUDP %d, TCP %d to %s:%d\n", eth_initialized, tcp_initialized, Tcp[tcp_initialized].remoteIP().toString().c_str(), Tcp[tcp_initialized].remotePort());
 		  tcp_initialized++;
 	  }
   }
@@ -309,13 +309,13 @@ void EthernetClass::Task(void) {
 				//String line = Tcp.readStringUntil('\r');
 				char line = Tcp[i].read();
 				if(line > 0){
-					//Serial.print(line);
+					Serial.print(line);
 					TTYdata.rxBuffer.put(line);
 				}
 			}
 			ip_active = i;
-			//TTYdata.analyze_ttydata(DISPLAY_USB|DISPLAY_TCP);
-			TTYdata.analyze_ttydata(DISPLAY_TCP);
+			TTYdata.analyze_ttydata(DISPLAY_USB|DISPLAY_TCP);
+			//TTYdata.analyze_ttydata(DISPLAY_TCP);
 		} else {
 			for(uint8_t k=i; k<TCP_MAX-1; k++){
 				Tcp[k] = Tcp[k+1];
