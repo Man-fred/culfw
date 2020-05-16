@@ -239,7 +239,9 @@ void em_send(char *data)              { RfSend.em_send(data); };
 void eth_func(char *data)             { Ethernet.func(data); }
 void fhtsend(char *data)              { FHT.fhtsend(data); };
 void fs20send(char *data)             { RfSend.fs20send(data); };
-void ftz_send(char *data)             { RfSend.ftz_send(data); };
+#ifdef HAS_FTZ
+  void ftz_send(char *data)             { RfSend.ftz_send(data); };
+#endif
 void gettime(char *data)              { CLOCK.gettime(data); };
 #if defined (HAS_IRRX) || defined (HAS_IRTX)
   void ir_func(char *data)              { IR.func(data); };
@@ -364,7 +366,9 @@ void setup() {
   #ifdef HAS_SOMFY_RTS
     { 'Y', somfy_rts_func },
   #endif
-  TTYdata.fntab[i++] = { 'Z', ftz_send };
+  #ifdef HAS_SOMFY_RTS
+    TTYdata.fntab[i++] = { 'Z', ftz_send };
+  #endif
   #ifdef HAS_MORITZ
     { 'Z', moritz_func },
   #endif

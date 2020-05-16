@@ -41,7 +41,7 @@
 #endif
 
 #if defined(CUL_V3) || defined(CUL_V4)
-#  define HAS_FTZ
+//obsolet #define HAS_FTZ
 #  define HAS_FHT_8v                    // PROGMEM:  586b  RAM: 23b
 #  define HAS_FHT_TF
 #  define FHTBUF_SIZE          174      //                 RAM: 174b
@@ -52,7 +52,7 @@
 //#  define HAS_ASKSIN_FUP                // PROGMEM:   78
 //#  define HAS_MORITZ                    // PROGMEM: 1696
 //#  define HAS_ESA                       // PROGMEM:  286
-//#  define HAS_TX3                       // PROGMEM:  168
+#  define HAS_TX3                       // PROGMEM:  168
 //#  define HAS_INTERTECHNO               // PROGMEM: 1352
 //#  define HAS_TCM97001                  // PROGMEM:  264
 //#  define HAS_UNIROLL                   // PROGMEM:   92
