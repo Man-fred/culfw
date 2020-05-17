@@ -140,14 +140,14 @@
 */
 #if defined(CUL_V3)      // not sure why libc is missing those ...
 //------------- speziell esp8266/nodemcu ------------------
-#  define PB0 15 // nodemcu D8 // PORTB0     (Nano PIN 10) // CS
-#  define PB1 14 // nodemcu D5 // PORTB1     (Nano PIN 13) // CLK
-#  define PB2 13 // nodemcu D7 // PORTB2     (Nano PIN 11) // MOSI
-#  define PB3 12 // nodemcu D6 // PORTB3     (Nano PIN 12) // MISO
-#  define PB6 PORTB6 // nodemcu not connected 
-#  define PD2 5  // nodemcu D1 // PORTD2     (Nano PIN  2) // GDO2
-#  define PD3 4  // nodemcu D2 // PORTD3     (Nano PIN  3) // GDO0
-#  define INT2 PD2 //nodemcu int wie GPO		0x02
+#  define PB0 15     //         nodemcu D8 // PORTB0     (Nano PIN 10) // CS
+#  define PB1 14     //         nodemcu D5 // PORTB1     (Nano PIN 13) // CLK
+#  define PB2 13     //         nodemcu D7 // PORTB2     (Nano PIN 11) // MOSI
+#  define PB3 12     //         nodemcu D6 // PORTB3     (Nano PIN 12) // MISO
+#  define PB6 PORTB6 //         nodemcu not connected 
+#  define PD2 5      // esp8266/nodemcu D1 // PORTD2     (Nano PIN  2) // GDO2
+#  define PD3 4      // esp8266/nodemcu D2 // PORTD3     (Nano PIN  3) // GDO0
+#  define INT2 PD2   // nodemcu int wie GPO		0x02
 
 #define EIMSK GPIE //ESP8266_REG(0x31C) //GPIO_STATUS R/W (Interrupt Enable)
 //------------- speziell esp8266 ------------------

@@ -19,7 +19,7 @@
 #include "led.h"
 #include "display.h"
 #include "fncollection.h"
-//#include "fht.h"
+#include "fht.h"
 
 #ifdef HAS_DMX
 #  include "dmx.h"

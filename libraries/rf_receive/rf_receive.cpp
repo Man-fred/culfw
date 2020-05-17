@@ -503,7 +503,8 @@ void RfReceiveClass::RfAnalyze_Task(void)
   bucket_t *b;
 
   if(lowtime) {
-#ifndef NO_RF_DEBUG
+////#ifndef NO_RF_DEBUG
+tx_report = 1;
     if(tx_report & REP_LCDMON) {
 #ifdef HAS_LCD
       lcd_txmon(hightime, lowtime);
@@ -522,11 +523,11 @@ void RfReceiveClass::RfAnalyze_Task(void)
     if(tx_report & REP_MONITOR) {
       DC('r'); if(tx_report & REP_BINTIME) DU(hightime*16,4);
       DC('f'); if(tx_report & REP_BINTIME) DU(lowtime*16,4);
-	  if(silence == 1) {
-		DC('.');
-		DNL();
-		silence = 2;
-	  }
+			if(silence == 1) {
+				DC('.');
+				DNL();
+				silence = 2;
+			}
     }
 	if( (tx_report & REP_BITS) && overflow) {
 		//DS_P(PSTR("BOVF\r\n"));            
@@ -534,7 +535,8 @@ void RfReceiveClass::RfAnalyze_Task(void)
 		DNL();
 		overflow = 0;
 	}
-#endif // NO_RF_DEBUG
+tx_report = 0;
+////#endif // NO_RF_DEBUG
     lowtime = 0;
   }
 
@@ -730,6 +732,7 @@ void RfReceiveClass::RfAnalyze_Task(void)
 
 void ICACHE_RAM_ATTR RfReceiveClass::reset_input(void)
 {
+	
   TIMSK1 = 0;
   bucket_array[bucket_in].state = STATE_RESET;
 #if defined (HAS_IT) || defined (HAS_TCM97001)
@@ -757,7 +760,7 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrTimer1(void)
 # endif
 #endif
   if(!silence) {
-	silence = 1;
+	  silence = 1;
   }
 #ifndef NO_RF_DEBUG
   if(tx_report & REP_MONITOR)
@@ -880,15 +883,15 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrHandler()
 #endif
 #ifdef ESP8266
 # ifdef LONG_PULSE
-  uint16_t c = ((((T1L) - timer1_read())/5)>>4);               // catch the time and make it smaller
+    uint16_t c = ((((T1L) - timer1_read())/5)>>4);               // catch the time and make it smaller
 # else
-  uint8_t c = ((((T1L) - timer1_read())/5)>>4);               // catch the time and make it smaller
+    uint8_t c = ((((T1L) - timer1_read())/5)>>4);               // catch the time and make it smaller
 # endif
 #else
 # ifdef LONG_PULSE
-  uint16_t c = (TCNT1>>4);               // catch the time and make it smaller
+    uint16_t c = (TCNT1>>4);               // catch the time and make it smaller
 # else
-  uint8_t c = (TCNT1>>4);               // catch the time and make it smaller
+    uint8_t c = (TCNT1>>4);               // catch the time and make it smaller
 # endif
 #endif
 
@@ -903,7 +906,7 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrHandler()
     }
   }
 
-#ifdef HAS_FTZ
+//#ifdef HAS_FTZ
   if ( b->state == STATE_FTZ ) {
     if(c < TSCALE(750))
     {
@@ -922,7 +925,7 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrHandler()
 		longMin = min(longMin, (uint32_t)c);
 	}
   }
-#endif
+//#endif //HAS_FTZ
 
 #ifdef HAS_ESA
   if (b->state == STATE_ESA) {
@@ -1005,7 +1008,7 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrHandler()
       }
     }
   }
-#endif
+#endif //HAS_IT
 
 #ifdef HAS_TCM97001
  if (b->state == STATE_TCM97001 && b->sync == 0) {
@@ -1075,7 +1078,7 @@ retry_sync:
 #ifdef HAS_IT
   else 
 #endif
-#endif
+#endif //HAS_TCM97001
 
 #ifdef HAS_IT
   if(hightime < TSCALE(600)   && hightime > TSCALE(140) &&

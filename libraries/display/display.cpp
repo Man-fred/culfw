@@ -51,15 +51,15 @@ void DisplayClass::chr(char data)
 # define buffer_used()
 #endif
 
-/*ifdef HAS_RF_ROUTER
+#ifdef HAS_RF_ROUTER
   channel = (DISPLAY_USB|DISPLAY_RFROUTER);
-////#else
+#else
   channel = DISPLAY_USB;
-//#endif
-//#ifdef HAS_ETHERNET
+#endif
+#ifdef HAS_ETHERNET
   channel |= DISPLAY_TCP;
-//#endif
-*/
+#endif
+
 
 #ifdef HAS_ETHERNET
   if(channel & DISPLAY_TCP)

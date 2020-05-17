@@ -183,7 +183,6 @@ inline void ICACHE_RAM_ATTR IsrTimer0 (void){
 //////////////////////////////////////////////////////////////////////
 // "Edge-Detected" Interrupt Handler
 //ISR(CC1100_INTVECT)
-// before 2.6.3: void inline IsrHandler (void){
 inline void ICACHE_RAM_ATTR IsrHandler (void){
   gdo2count++;
   RfReceive.IsrHandler();
@@ -200,29 +199,31 @@ inline void ICACHE_RAM_ATTR IsrTimer1(void)
 }
 
 void loop20s(unsigned long counter) {
-  Serial.print(micros());
+  Serial.print(micros());    // Chip
   Serial.print(" loop ");
-  Serial.print(TimerMicros);
+  Serial.print(TimerMicros); // last Loop()
   Serial.print(" - ");
-  Serial.print(Timer125Hz);
+  Serial.print(Timer125Hz);  // from last Loop()
   Serial.print(" - ");
-  Serial.print(Timer1Hz);
+  Serial.print(Timer1Hz);    // from last Loop()
   Serial.print(" ticks ");
-  Serial.print(CLOCK.ticks);
+  Serial.print(CLOCK.ticks); // from interrupt, sould be better than Timer125Hz
   Serial.print(" T1 ");
-  Serial.print(timer1_read());
+  Serial.print(timer1_read());//break before silence 20000 = 4ms
   //Serial.print(" T0c ");
   //Serial.print(timer0count);
   Serial.print(" T1c ");
-  Serial.print(timer1count);
+  Serial.print(timer1count); // count silence
   Serial.print(" gdo2INT ");
-  Serial.print(gdo2count);
+  Serial.print(gdo2count);   // count gdo2 interrupts
   Serial.print(" GDO0t ");
   Serial.print(GDO0Toggle);
   Serial.print(" GDO2t ");
   Serial.println(GDO2Toggle);
   GDO0Toggle = 0;
   GDO2Toggle = 0;
+  timer1count = 0;
+  gdo2count = 0;
 }
 
 void loop1Hz(unsigned long counter) {
@@ -465,7 +466,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  /*
+  
   TimerMicros = micros();
   if (TimerMicros/8000 != Timer125Hz) {
     Timer125Hz = TimerMicros/8000;
@@ -480,7 +481,7 @@ void loop() {
     }
   }
   CheckGDO();
-  */
+  
   Serial_Task();
 //    USB_USBTask();
 //    CDC_Task();
