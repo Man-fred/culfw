@@ -174,9 +174,9 @@ void Serial_Task() {
 // a "minute" task too long
 //ISR(TIMER0_COMPA_vect, ISR_BLOCK)
 inline void ICACHE_RAM_ATTR IsrTimer0 (void){
-  timer0count++;
-  Timer0Cycles = Timer0Cycles + OCR0A;
-  timer0_write(Timer0Cycles);
+  //timer0count++;
+  //Timer0Cycles = Timer0Cycles + OCR0A;
+  //timer0_write(Timer0Cycles);
   CLOCK.IsrHandler();
 }
 
@@ -425,16 +425,16 @@ void setup() {
   #else
     OCR0A  = 640000; // soll 80000000 Hz <=> 1sec /125 = 125 Hz
   # endif
-  Timer0Cycles = ESP.getCycleCount() + OCR0A;
+  //Timer0Cycles = ESP.getCycleCount() + OCR0A;
   noInterrupts();
-  timer0_isr_init();
-  timer0_attachInterrupt(IsrTimer0);
-  timer0_write(Timer0Cycles); 
+  //timer0_isr_init();
+  //timer0_attachInterrupt(IsrTimer0);
+  //timer0_write(Timer0Cycles); 
   OCR1A = 20000; // SILENCE 4 ms= 4 * 5.000
   timer1_isr_init();
-  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_LOOP); // TIM_DIV16 : 80 MHz / 16 -> 5.000.000 Ticks je s
+  timer1_attachInterrupt(IsrTimer1);
+  timer1_enable(TIM_DIV16, TIM_EDGE, TIM_SINGLE); // TIM_DIV16 : 80 MHz / 16 -> 5.000.000 Ticks je s
   timer1_write(OCR1A); 
-  //timer1_attachInterrupt(IsrTimer1);
   interrupts();
 #endif
 
@@ -470,13 +470,14 @@ void loop() {
   TimerMicros = micros();
   if (TimerMicros/8000 != Timer125Hz) {
     Timer125Hz = TimerMicros/8000;
-    loop125Hz(Timer125Hz);
+    IsrTimer0();
+    //loop125Hz(Timer125Hz);
     if (Timer125Hz/125 != Timer1Hz) {
       Timer1Hz = Timer125Hz/125;
       loop1Hz(Timer1Hz);
       if (Timer1Hz/20 != Timer20s) {
         Timer20s = Timer1Hz/20;
-        loop20s(Timer20s);
+        //loop20s(Timer20s);
       }
     }
   }

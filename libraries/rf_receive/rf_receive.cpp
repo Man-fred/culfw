@@ -503,8 +503,9 @@ void RfReceiveClass::RfAnalyze_Task(void)
   bucket_t *b;
 
   if(lowtime) {
-////#ifndef NO_RF_DEBUG
-tx_report = 1;
+#ifndef NO_RF_DEBUG
+    //DH(tx_report,1);
+    //tx_report = 0xff;
     if(tx_report & REP_LCDMON) {
 #ifdef HAS_LCD
       lcd_txmon(hightime, lowtime);
@@ -535,8 +536,7 @@ tx_report = 1;
 		DNL();
 		overflow = 0;
 	}
-tx_report = 0;
-////#endif // NO_RF_DEBUG
+#endif // NO_RF_DEBUG
     lowtime = 0;
   }
 
@@ -754,7 +754,7 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrTimer1(void)
   tmp=OCR1A;
   OCR1A = TWRAP;                        // Wrap Timer
 # ifdef ESP8266
-  timer1_write(tmp); // restart timer
+  //timer1_write(tmp); // restart timer
 # else
   TCNT1=tmp;                            // reinitialize timer to measure times > SILENCE
 # endif
@@ -762,17 +762,16 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrTimer1(void)
   if(!silence) {
 	  silence = 1;
   }
-#ifndef NO_RF_DEBUG
-  if(tx_report & REP_MONITOR)
-    DC('.');
-#endif
-
+////////////////////test
   if(bucket_array[bucket_in].state < STATE_COLLECT ||
      bucket_array[bucket_in].byteidx < 2) {    // false alarm
     reset_input();
     return;
-
   }
+ #ifndef NO_RF_DEBUG
+  if(tx_report & REP_MONITOR)
+   DC('+');
+#endif
 
   if(bucket_nrused+1 == RCV_BUCKETS) {   // each bucket is full: reuse the last
 
