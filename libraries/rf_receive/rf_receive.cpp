@@ -3,8 +3,10 @@
  * Inspired by code from Dirk Tostmann
  * License: GPL v2
  */
-//#include <avr/io.h>
-//#include <avr/interrupt.h>
+#ifndef ESP8266
+  #include <avr/io.h>
+  #include <avr/interrupt.h>
+#endif
 #include <stdio.h>
 #include <parity.h>
 #include <string.h>

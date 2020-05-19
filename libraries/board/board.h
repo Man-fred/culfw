@@ -50,7 +50,7 @@
 #  define HAS_RAWSEND                   //
 //#  define HAS_ASKSIN                    // PROGMEM: 1314
 //#  define HAS_ASKSIN_FUP                // PROGMEM:   78
-//#  define HAS_MORITZ                    // PROGMEM: 1696
+#  define HAS_MORITZ                    // PROGMEM: 1696
 //#  define HAS_ESA                       // PROGMEM:  286
 #  define HAS_TX3                       // PROGMEM:  168
 //#  define HAS_INTERTECHNO               // PROGMEM: 1352
@@ -269,10 +269,17 @@ extern unsigned char OCIE1A;
 #define HAS_ETHERNET_KEEPALIVE  1
 #define ETHERNET_KEEPALIVE_TIME 30
 //#define HAS_NTP                 1   
-// Ergaenzung wegen IR
-// #define HAS_IRRX
-// #define HAS_IRTX
-// #define IRSND_OCx               16  // D0 !? ESP GPIO pin to use. Recommended: 4 (D2).
-// #define IRMP_PIN                2 // D4 !? 
+
+/*/ Ergaenzung wegen IR
+#define HAS_IRRX
+#define HAS_IRTX
+#define IRSND_OCx               16  // D0 !? ESP GPIO pin to use. Recommended: 4 (D2).
+#define IRMP_PIN                2 // D4 !? 
+*/
+
+/*/ Ergaenzung wegen ONEWIRE
+#define HAS_ONEWIRE         10      // OneWire Device Buffer, RAM: 10 * 8 Byte 
+#define OW_SPU			    // enable StrongPullUp
+*/
 
 #endif // __BOARD_H__

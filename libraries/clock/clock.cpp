@@ -128,7 +128,7 @@ void CLOCKClass::Minute_Task(void)
 #ifdef HAS_ONEWIRE
   // Check if a running conversion is done
   // if HMS Emulation is on, and the Minute timer has expired
-  onewire_HsecTask ();
+  Onewire.HsecTask ();
 #endif
 
   if(clock_hsec<125)
@@ -145,7 +145,7 @@ void CLOCKClass::Minute_Task(void)
 
 #ifdef HAS_ONEWIRE
   // if HMS Emulation is on, check the HMS timer
-  onewire_SecTask ();
+  Onewire.SecTask ();
 #endif
 #ifdef HAS_VZ
   vz_sectask();

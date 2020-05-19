@@ -96,6 +96,9 @@ byte CheckGDO(void)
 #ifdef HAS_ETHERNET
 #  include "ethernet.h"
 #endif
+#ifdef HAS_ONEWIRE
+#  include "onewire.h"
+#endif
 #ifdef HAS_MEMFN
 #  include "memory.h"   // getfreemem
 #endif
@@ -249,7 +252,13 @@ void gettime(char *data)              { CLOCK.gettime(data); };
 #endif
 void ks_send(char *data)              { RfSend.ks_send(data); };
 void ledfunc(char *data)              { FNcol.ledfunc(data); };
+#ifdef HAS_MORITZ
+void moritz_func(char *data)          { Moritz.func(data); };
+#endif
 void native_func(char *data)          { RfNative.native_func(data); };
+#ifdef HAS_ONEWIRE  
+void onewire_func(char *data)         { Onewire.func(data); };
+#endif  
 void prepare_boot(char *data)         { FNcol.prepare_boot(data); }
 void rawsend(char *data)              { RfSend.rawsend(data); };
 void read_eeprom(char *data)          { FNcol.read_eeprom(data); };
@@ -279,6 +288,9 @@ const PROGMEM t_fntab fntab[] = {
 #ifdef HAS_DMX
   { 'D', dmx_func },
 #endif
+#ifdef HAS_ONEWIRE  
+  { 'O', onewire_func },
+#endif  
 #ifdef HAS_INTERTECHNO
   { 'i', it_func },
 #endif
@@ -345,6 +357,9 @@ void setup() {
   #ifdef HAS_RFNATIVE
     TTYdata.fntab[i++] = { 'N', native_func };
   #endif
+  #ifdef HAS_ONEWIRE  
+    TTYdata.fntab[i++] = { 'O', onewire_func };
+  #endif  
   #ifdef HAS_ETHERNET
     TTYdata.fntab[i++] = { 'q', tcplink_close };
   #endif
@@ -371,7 +386,7 @@ void setup() {
     TTYdata.fntab[i++] = { 'Z', ftz_send };
   #endif
   #ifdef HAS_MORITZ
-    { 'Z', moritz_func },
+     TTYdata.fntab[i++] = { 'Z', moritz_func },
   #endif
   #ifdef HAS_ZWAVE
     { 'z', zwave_func },
@@ -504,7 +519,7 @@ void loop() {
     Ethernet.Task();
 #endif
 #ifdef HAS_MORITZ
-    rf_moritz_task();
+    Moritz.task();
 #endif
 #ifdef HAS_RWE
     rf_rwe_task();
