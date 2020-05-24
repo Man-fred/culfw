@@ -64,6 +64,10 @@
 
    static uint8_t zerohigh, zerolow, onehigh, onelow;
 
+RfSendClass::RfSendClass(){
+	credit_10ms = MAX_CREDIT;
+}
+
 void RfSendClass::send_bit(uint8_t bit, uint8_t edge = 0)
 {
 #ifdef ESP8266

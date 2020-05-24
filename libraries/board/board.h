@@ -7,6 +7,7 @@
 #ifndef ESP8266
 #  define ESP8266
 #endif
+#include <Esp.h>
 
 #define VERSION_1               1
 #define VERSION_2               67
@@ -33,7 +34,7 @@
 #define HAS_CC1101_PLL_LOCK_CHECK_MSG		// PROGMEM:  22b
 #define HAS_CC1101_PLL_LOCK_CHECK_MSG_SW	// PROGMEM:  22b
 #undef  RFR_DEBUG                       // PROGMEM:  354b  RAM: 14b
-#undef  HAS_FASTRF                      // PROGMEM:  468b  RAM:  1b
+#define HAS_FASTRF                      // PROGMEM:  468b  RAM:  1b
 
 
 #if defined(CUL_V3_ZWAVE)
@@ -48,7 +49,7 @@
 #  define RCV_BUCKETS            4      //                 RAM: 25b * bucket
 #  define FULL_CC1100_PA                // PROGMEM:  108b
 #  define HAS_RAWSEND                   //
-//#  define HAS_ASKSIN                    // PROGMEM: 1314
+#  define HAS_ASKSIN                    // PROGMEM: 1314
 //#  define HAS_ASKSIN_FUP                // PROGMEM:   78
 #  define HAS_MORITZ                    // PROGMEM: 1696
 //#  define HAS_ESA                       // PROGMEM:  286
@@ -56,7 +57,7 @@
 //#  define HAS_INTERTECHNO               // PROGMEM: 1352
 //#  define HAS_TCM97001                  // PROGMEM:  264
 //#  define HAS_UNIROLL                   // PROGMEM:   92
-//#  define HAS_MEMFN                     // PROGMEM:  168
+#  define HAS_MEMFN                     // PROGMEM:  168
 //#  define HAS_SOMFY_RTS                 // PROGMEM: 1716
 //#  define HAS_BELFOX                    // PROGMEM:  214
 #endif
@@ -156,6 +157,7 @@ extern unsigned char PORTB;  //unbenutzt wg. Anpassung in cc1100_cs
 extern unsigned char PORTD;
 extern unsigned char PINB;
 extern unsigned char PIND;
+extern unsigned char DDRB; //
 extern unsigned char DDRD; //
 extern unsigned char ISC20;
 extern unsigned char EICRA;

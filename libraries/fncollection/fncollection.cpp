@@ -70,7 +70,7 @@ __attribute__((__noinline__))
 uint16_t FNCOLLECTIONClass::erw(uint8_t p)
 {
   //return eeprom_read_word((uint16_t *)p);
-  return EEPROM.read(p++) << 8 + EEPROM.read(p);
+  return (uint16_t)EEPROM.read(p) | ((uint16_t)EEPROM.read(p+1) << 8);
 }
 
 void FNCOLLECTIONClass::display_ee_bytes(uint8_t a, uint8_t cnt)
@@ -113,10 +113,9 @@ void FNCOLLECTIONClass::read_eeprom(char *in)
     } else if(in[2] == 'a') { display_ee_ip4(EE_IP4_ADDR);
     } else if(in[2] == 'n') { display_ee_ip4(EE_IP4_NETMASK);
     } else if(in[2] == 'g') { display_ee_ip4(EE_IP4_GATEWAY);
+    } else if(in[2] == 'p') { DU(erw(EE_IP4_TCPLINK_PORT),5);
     } else if(in[2] == 'N') { display_ee_ip4(EE_IP4_NTPSERVER);
     } else if(in[2] == 'o') { DH2(erb(EE_IP4_NTPOFFSET));
-    } else if(in[2] == 'p') {
-      DU(erw(EE_IP4_TCPLINK_PORT), 0);
     }
   } else 
 #endif
@@ -197,7 +196,7 @@ void FNCOLLECTIONClass::write_eeprom(char *in, bool commit)
     } else if(in[2] == 'a') { d=4; STRINGFUNC.fromip (in+3,hb,4); addr=EE_IP4_ADDR;
     } else if(in[2] == 'n') { d=4; STRINGFUNC.fromip (in+3,hb,4); addr=EE_IP4_NETMASK;
     } else if(in[2] == 'g') { d=4; STRINGFUNC.fromip (in+3,hb,4); addr=EE_IP4_GATEWAY;
-    } else if(in[2] == 'p') { d=2; STRINGFUNC.fromdec(in+3,hb);   addr=EE_IP4_TCPLINK_PORT;
+    } else if(in[2] == 'p') { d=2; STRINGFUNC.fromdec(in+3,hb);   addr=EE_IP4_TCPLINK_PORT; Serial.print(hb[0]);Serial.print(" ");Serial.println(hb[1]);
     } else if(in[2] == 'N') { d=4; STRINGFUNC.fromip (in+3,hb,4); addr=EE_IP4_NTPSERVER;
     } else if(in[2] == 'o') { d=1; STRINGFUNC.fromhex(in+3,hb,1); addr=EE_IP4_NTPOFFSET;
 #ifdef HAS_NTP
@@ -207,7 +206,7 @@ void FNCOLLECTIONClass::write_eeprom(char *in, bool commit)
     }
     for(uint8_t i = 0; i < d; i++)
       ewb(addr++, hb[i], false);
-	ewc(commit);
+	  ewc(commit);
   } else 
 #endif
   {

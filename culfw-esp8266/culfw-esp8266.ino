@@ -14,6 +14,7 @@
 unsigned char PORTB;
 unsigned char PORTD;
 unsigned char PINB;
+unsigned char DDRB; // rf_asksin.cpp:65 SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN );   // CS as output
 unsigned char DDRD; //
 unsigned char ISC20;
 unsigned char EICRA;
@@ -90,7 +91,9 @@ byte CheckGDO(void)
 #include "rf_receive.h" 
 #include "rf_send.h"    // fs20send u.a
 #include "fht.h"    // fhtsend
-//#include "fastrf.h"   // fastrf_func
+#ifdef HAS_FASTRF
+#  include "fastrf.h"
+#endif
 #include "rf_router.h"    // rf_router_func
 
 #ifdef HAS_ETHERNET
@@ -236,70 +239,107 @@ void loop1Hz(unsigned long counter) {
 void loop125Hz(unsigned long counter) {
 }
 
-void ccreg(char *data)                { CC1100.ccreg(data); };
-void ccsetpa(char *data)              { CC1100.ccsetpa(data); };
-void eeprom_factory_reset(char *data) { FNcol.eeprom_factory_reset(data); };
-void em_send(char *data)              { RfSend.em_send(data); };
-void eth_func(char *data)             { Ethernet.func(data); }
-void fhtsend(char *data)              { FHT.fhtsend(data); };
-void fs20send(char *data)             { RfSend.fs20send(data); };
-#ifdef HAS_FTZ
-  void ftz_send(char *data)             { RfSend.ftz_send(data); };
-#endif
-void gettime(char *data)              { CLOCK.gettime(data); };
-#if defined (HAS_IRRX) || defined (HAS_IRTX)
-  void ir_func(char *data)              { IR.func(data); };
-#endif
-void ks_send(char *data)              { RfSend.ks_send(data); };
-void ledfunc(char *data)              { FNcol.ledfunc(data); };
-#ifdef HAS_MORITZ
-void moritz_func(char *data)          { Moritz.func(data); };
-#endif
-void native_func(char *data)          { RfNative.native_func(data); };
-#ifdef HAS_ONEWIRE  
-void onewire_func(char *data)         { Onewire.func(data); };
-#endif  
-void prepare_boot(char *data)         { FNcol.prepare_boot(data); }
-void rawsend(char *data)              { RfSend.rawsend(data); };
-void read_eeprom(char *data)          { FNcol.read_eeprom(data); };
-void rf_mbus_func(char *data)         { Serial.println("rf_mbus_func"); };
-void rf_router_func(char *data)       { RfRouter.func(data); }
-void set_txreport(char *data)         { RfReceive.set_txreport(data); };
-void tcplink_close(char *data)        { Ethernet.close(data); }
-void version(char *data)              { FNcol.version(data); };
 void write_eeprom(char *data)         { FNcol.write_eeprom(data); };
 
-const PROGMEM t_fntab fntab[] = {
-
-//  { 'm', getfreemem },
-
-  { 'B', prepare_boot },
-#ifdef HAS_MBUS
-  { 'b', rf_mbus_func },
-#endif
-  { 'C', ccreg },
-  { 'F', fs20send },
-#ifdef HAS_VZ
-  { 'o', vz_func },
-#endif
-#ifdef HAS_MORITZ
-  { 'Z', moritz_func },
-#endif
-#ifdef HAS_DMX
-  { 'D', dmx_func },
-#endif
-#ifdef HAS_ONEWIRE  
-  { 'O', onewire_func },
-#endif  
-#ifdef HAS_INTERTECHNO
-  { 'i', it_func },
-#endif
+const t_fntab fntab[] = {
 #ifdef HAS_ASKSIN
-  { 'A', asksin_func },
+  { 'A', [&RfAsksin](char *data) { RfAsksin.func(data); } },
 #endif
-#if defined (HAS_IRRX) || defined (HAS_IRTX)
-  { 'I', ir_func }
-#endif
+  // 'a' CUR battery
+  { 'B', [&FNcol](char *data) { FNcol.prepare_boot(data); } },
+  #ifdef HAS_MBUS
+    { 'b', rf_mbus_func },
+  #endif
+  { 'C', [&CC1100](char *data) { CC1100.ccreg(data); } },
+  #ifdef HAS_NTP
+    { 'c', ntp_func },
+  #endif
+  // 'D' TuxRadio
+  // 'd' CUR LCD
+  #ifdef HAS_RWE
+    // double? (CUN only) eth debugging
+    { 'E', rwe_func },
+  #endif
+  { 'e', [&FNcol](char *data) { FNcol.eeprom_factory_reset(data); } },
+  { 'F', [&RfSend](char *data) { RfSend.fs20send(data); } },
+  #ifdef HAS_FASTRF
+    { 'f', [&FastRF](char *data) { FastRF.func(data); } },
+  #endif
+  #ifdef HAS_RAWSEND
+    { 'G', [&RfSend](char *data) { RfSend.rawsend(data); } },
+  #endif
+  // 'H' HM485
+  #ifdef HAS_HOERMANN_SEND
+    { 'h', hm_send },
+  #endif
+  #if defined (HAS_IRRX) || defined (HAS_IRTX)
+    { 'I', [&IR](char *data) { IR.func(data); } },
+  #endif
+  #ifdef HAS_INTERTECHNO
+    { 'i', it_func },
+  #endif
+  #ifdef HAS_RAWSEND
+    { 'K', [&RfSend](char *data) { RfSend.ks_send(data); } },
+  #endif
+  #ifdef HAS_KOPP_FC
+    { 'k', kopp_fc_func },
+  #endif
+  #ifdef HAS_BELFOX
+    { 'L', send_belfox },
+  #endif
+  { 'l', [&FNcol](char *data) { FNcol.ledfunc(data); } },
+  #ifdef HAS_RAWSEND
+    { 'M', [&RfSend](char *data) { RfSend.em_send(data); } },
+  #endif
+  #ifdef HAS_MEMFN
+    { 'm', [&Memory](char *data) { Memory.getfreemem(data); } },
+  #endif
+  #ifdef HAS_RFNATIVE
+    { 'N', [&RfNative](char *data) { RfNative.native_func(data); } },
+  #endif
+  #ifdef HAS_ONEWIRE  
+    { 'O', [&Onewire](char *data) { Onewire.func(data); } },
+  #endif 
+  // 'o' CUNO2 OBIS Command-Set
+  // 'P' CUR picture
+  #ifdef HAS_ETHERNET
+    { 'q', [&Ethernet](char *data) { Ethernet.close(data); } },
+  #endif
+  { 'R', [&FNcol](char *data) { FNcol.read_eeprom(data); } },
+  { 'T', [&FHT](char *data) { FHT.fhtsend(data); } },
+  { 't', [&CLOCK](char *data) { CLOCK.gettime(data); } },
+  #ifdef HAS_UNIROLL
+    { 'U', ur_send },
+  #endif
+  #ifdef HAS_RF_ROUTER
+    { 'u', [&RfRouter](char *data) { RfRouter.func(data); } },
+  #endif
+  { 'V', [&FNcol](char *data) { FNcol.version(data); } },
+  #ifdef HAS_EVOHOME
+    { 'v', rf_evohome_func },
+  #endif
+  { 'W', [&FNcol](char *data) { FNcol.write_eeprom(data); } },
+  // 'w' (CUR/CUN) write a file
+  { 'X', [&RfReceive](char *data) { RfReceive.set_txreport(data); } },
+  { 'x', [&CC1100](char *data) { CC1100.ccsetpa(data); } },
+  #ifdef HAS_SOMFY_RTS
+    { 'Y', somfy_rts_func },
+  #endif
+  #ifdef HAS_FTZ
+    // obsolet
+    { 'Z', [&RfSend](char *data) { RfSend.ftz_send(data); } },
+  #endif
+  #ifdef HAS_MORITZ
+     { 'Z', [&Moritz](char *data) { Moritz.func(data); } },
+  #endif
+  #ifdef HAS_ZWAVE
+    { 'z', zwave_func },
+  #endif
+  //doppelt, eigene Kuerzel!
+  #ifdef HAS_ETHERNET
+    { '1', [&Ethernet](char *data) { Ethernet.func(data); } }, //'E'
+  #endif
+  { 0, 0 }
 };
 
 void setup() {
@@ -308,97 +348,6 @@ void setup() {
   Serial.println("eeprom_init");
   FNcol.eeprom_init();
   Serial.println("eeprom_init ok");
-
-  int i = 0;
-#ifdef HAS_ASKSIN
-  TTYdata.fntab[i++] = { 'A', asksin_func };
-#endif
-  TTYdata.fntab[i++] = { 'B', prepare_boot };
-  #ifdef HAS_MBUS
-    TTYdata.fntab[i++] = { 'b', rf_mbus_func };
-  #endif
-  TTYdata.fntab[i++] = { 'C', ccreg };
-  #ifdef HAS_RWE
-    { 'E', rwe_func },
-  #endif
-  TTYdata.fntab[i++] = { 'e', eeprom_factory_reset };
-  TTYdata.fntab[i++] = { 'F', fs20send };
-  #ifdef HAS_FASTRF
-    { 'f', fastrf_func },
-  #endif
-  #ifdef HAS_RAWSEND
-    TTYdata.fntab[i++] = { 'G', rawsend };
-  #endif
-  #ifdef HAS_HOERMANN_SEND
-    { 'h', hm_send },
-  #endif
-  #ifdef HAS_INTERTECHNO
-    { 'i', it_func },
-  #endif
-  #if defined (HAS_IRRX) || defined (HAS_IRTX)
-    TTYdata.fntab[i++] = { 'I', ir_func };
-  #endif
-  #ifdef HAS_RAWSEND
-    TTYdata.fntab[i++] = { 'K', ks_send };
-  #endif
-  #ifdef HAS_KOPP_FC
-    { 'k', kopp_fc_func },
-  #endif
-  #ifdef HAS_BELFOX
-    { 'L', send_belfox },
-  #endif
-  TTYdata.fntab[i++] = { 'l', ledfunc };
-  #ifdef HAS_RAWSEND
-    TTYdata.fntab[i++] = { 'M', em_send };
-  #endif
-  #ifdef HAS_MEMFN
-    { 'm', getfreemem },
-  #endif
-  #ifdef HAS_RFNATIVE
-    TTYdata.fntab[i++] = { 'N', native_func };
-  #endif
-  #ifdef HAS_ONEWIRE  
-    TTYdata.fntab[i++] = { 'O', onewire_func };
-  #endif  
-  #ifdef HAS_ETHERNET
-    TTYdata.fntab[i++] = { 'q', tcplink_close };
-  #endif
-  TTYdata.fntab[i++] = { 'R', read_eeprom };
-  TTYdata.fntab[i++] = { 'T', fhtsend };
-  TTYdata.fntab[i++] = { 't', gettime };
-  #ifdef HAS_UNIROLL
-    { 'U', ur_send },
-  #endif
-  #ifdef HAS_RF_ROUTER
-    TTYdata.fntab[i++] = { 'u', rf_router_func };
-  #endif
-  TTYdata.fntab[i++] = { 'V', version };
-  #ifdef HAS_EVOHOME
-    { 'v', rf_evohome_func },
-  #endif
-  TTYdata.fntab[i++] = { 'W', write_eeprom };
-  TTYdata.fntab[i++] = { 'X', set_txreport };
-  TTYdata.fntab[i++] = { 'x', ccsetpa };
-  #ifdef HAS_SOMFY_RTS
-    { 'Y', somfy_rts_func },
-  #endif
-  #ifdef HAS_SOMFY_RTS
-    TTYdata.fntab[i++] = { 'Z', ftz_send };
-  #endif
-  #ifdef HAS_MORITZ
-     TTYdata.fntab[i++] = { 'Z', moritz_func },
-  #endif
-  #ifdef HAS_ZWAVE
-    { 'z', zwave_func },
-  #endif
-  //doppelt, eigene Kuerzel!
-  #ifdef HAS_ETHERNET
-    TTYdata.fntab[i++] = { '1', eth_func }; //'E'
-  #endif
-  #ifdef HAS_NTP
-    TTYdata.fntab[i++] = { '2', ntp_func }; // 'c'
-  #endif
-  TTYdata.fntab[i++] = { 0, 0 };
 
 #ifndef ESP8266
   wdt_enable(WDTO_2S);
@@ -483,18 +432,21 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   TimerMicros = micros();
-  if (TimerMicros/8000 != Timer125Hz) {
-    Timer125Hz = TimerMicros/8000;
-    IsrTimer0();
-    //loop125Hz(Timer125Hz);
-    if (Timer125Hz/125 != Timer1Hz) {
-      Timer1Hz = Timer125Hz/125;
-      loop1Hz(Timer1Hz);
-      if (Timer1Hz/20 != Timer20s) {
-        Timer20s = Timer1Hz/20;
+  unsigned long temp = TimerMicros/8000;
+  if (temp != Timer125Hz) {
+    Timer125Hz = temp;
+    CLOCK.IsrHandler();
+    /*/loop125Hz(Timer125Hz);
+    temp = Timer125Hz/125;
+    if (temp != Timer1Hz) {
+      Timer1Hz = temp;
+      //loop1Hz(Timer1Hz);
+      temp = Timer1Hz/20;
+      if (temp != Timer20s) {
+        Timer20s = temp;
         //loop20s(Timer20s);
       }
-    }
+    }*/
   }
   CheckGDO();
   
@@ -504,13 +456,13 @@ void loop() {
     RfReceive.RfAnalyze_Task();
     CLOCK.Minute_Task();
 #ifdef HAS_FASTRF
-    FastRF_Task();
+    FastRF.Task();
 #endif
 #ifdef HAS_RF_ROUTER
     RfRouter.task();
 #endif
 #ifdef HAS_ASKSIN
-    rf_asksin_task();
+    RfAsksin.task();
 #endif
 #ifdef HAS_IRRX
     IR.task();

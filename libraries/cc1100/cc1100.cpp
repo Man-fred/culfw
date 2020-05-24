@@ -447,7 +447,7 @@ void CC1100Class::set_ccoff(void){
   cc_on = 0;
 
 #ifdef HAS_ASKSIN
-  asksin_on = 0;
+  RfAsksin.on = 0;
 #endif
 
 #ifdef HAS_MORITZ
@@ -460,7 +460,7 @@ void CC1100Class::set_ccon(void){
   cc_on = 1;
 
 #ifdef HAS_ASKSIN
-  asksin_on = 0;
+  RfAsksin.on = 0;
 #endif
 
 #ifdef HAS_MORITZ

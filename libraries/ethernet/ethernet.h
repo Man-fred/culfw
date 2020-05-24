@@ -70,6 +70,7 @@ private:
 	WiFiClient Tcp[TCP_MAX];  // 
 	uint8_t tcp_initialized;
 	int ip_active;
+	uint16_t tcplink_port;
 #endif //ESP8266
 };
 

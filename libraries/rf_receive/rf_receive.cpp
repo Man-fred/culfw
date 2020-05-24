@@ -25,7 +25,9 @@
 #ifdef HAS_LCD
 #  include "pcf8833.h"
 #endif
-#include "fastrf.h"
+#ifdef HAS_FASTRF
+#  include "fastrf.h"
+#endif
 #include "rf_router.h"
 
 #ifdef HAS_ASKSIN
@@ -870,8 +872,8 @@ void ICACHE_RAM_ATTR RfReceiveClass::IsrHandler()
   silence = 0;
 
 #ifdef HAS_FASTRF
-  if(fastrf_on) {
-    fastrf_on = 2;
+  if(FastRF.fastrf_on) {
+    FastRF.fastrf_on = 2;
     return;
   }
 #endif

@@ -47,7 +47,9 @@ void ICACHE_RAM_ATTR CLOCKClass::IsrHandler()
 #endif
 #ifdef HAS_FHT_8v
   if(FHT.fht8v_timeout)
+	{
     FHT.fht8v_timeout--;
+	}
 #endif
 #ifdef HAS_FHT_80b
   if(FHT.fht80b_timeout != FHT_TIMER_DISABLED)
@@ -114,7 +116,9 @@ void CLOCKClass::Minute_Task(void)
 #endif
 #ifdef HAS_FHT_8v
   if(FHT.fht8v_timeout == 0)
+	{
     FHT.fht8v_timer();
+	}
 #endif
 #ifdef HAS_FHT_80b
   if(FHT.fht80b_timeout == 0)
