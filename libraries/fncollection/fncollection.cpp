@@ -113,7 +113,7 @@ void FNCOLLECTIONClass::read_eeprom(char *in)
     } else if(in[2] == 'a') { display_ee_ip4(EE_IP4_ADDR);
     } else if(in[2] == 'n') { display_ee_ip4(EE_IP4_NETMASK);
     } else if(in[2] == 'g') { display_ee_ip4(EE_IP4_GATEWAY);
-    } else if(in[2] == 'p') { DU(erw(EE_IP4_TCPLINK_PORT),5);
+    } else if(in[2] == 'p') { DU(erw(EE_IP4_TCPLINK_PORT),0);
     } else if(in[2] == 'N') { display_ee_ip4(EE_IP4_NTPSERVER);
     } else if(in[2] == 'o') { DH2(erb(EE_IP4_NTPOFFSET));
     }

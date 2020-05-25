@@ -350,15 +350,15 @@ void EthernetClass::ewip(const uint16_t ip[2], uint8_t *addr)
 #ifndef ESP8266
   uint16_t ip0 = HTONS(ip[0]);
   uint16_t ip1 = HTONS(ip[1]);
-  FNcol.ewb(addr+0, ip0>>8);
-  FNcol.ewb(addr+1, ip0&0xff);
-  FNcol.ewb(addr+2, ip1>>8);
-  FNcol.ewb(addr+3, ip1&0xff);
+  FNcol.ewb(addr[0], ip0>>8);
+  FNcol.ewb(addr[1], ip0&0xff);
+  FNcol.ewb(addr[2], ip1>>8);
+  FNcol.ewb(addr[3], ip1&0xff);
 #else
-  FNcol.ewb(addr+1, ip[0]>>8);
-  FNcol.ewb(addr+0, ip[0]&0xff);
-  FNcol.ewb(addr+3, ip[1]>>8);
-  FNcol.ewb(addr+2, ip[1]&0xff);
+  FNcol.ewb(addr[1], ip[0]>>8);
+  FNcol.ewb(addr[0], ip[0]&0xff);
+  FNcol.ewb(addr[3], ip[1]>>8);
+  FNcol.ewb(addr[2], ip[1]&0xff);
 #endif
 }
 
