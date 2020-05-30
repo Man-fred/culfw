@@ -96,8 +96,13 @@ const uint8_t PROGMEM MODE_CFG[MAX_MODES][20] = {
 
 void RfNativeClass::native_init(uint8_t mode) {
 
-  //esp8266 EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
-  //esp8266 SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN );   // CS as output
+  #ifndef ESP8266	
+		EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
+    SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
+  #else
+		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
+    pinMode(CC1100_CS_PIN, OUTPUT);
+  #endif
 
   native_on = 0;
 

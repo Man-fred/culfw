@@ -81,8 +81,13 @@ RfMoritzClass::RfMoritzClass(){
 void RfMoritzClass::init(void)
 {
 
-//esp8266      EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
-//esp8266      SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN );   // CS as output
+  #ifndef ESP8266	
+   EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
+   SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
+  #else
+		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
+    pinMode(CC1100_CS_PIN, OUTPUT);
+  #endif
 
   CC1100_DEASSERT;                           // Toggle chip select signal
   MYDELAY.my_delay_us(30);
@@ -109,16 +114,16 @@ void RfMoritzClass::init(void)
   //This is ccRx() but without enabling the interrupt
   uint8_t cnt = 0xff;
   //Enable RX. Perform calibration first if coming from IDLE and MCSM0.FS_AUTOCAL=1.
-  //Why do it multiple times?
-  while(cnt-- && (CC1100.ccStrobe( CC1100_SRX ) & 0x70) != 1)
+  while(cnt-- && (CC1100.ccStrobe( CC1100_SRX ) & CC1100_STATUS_STATE_BM) != CC1100_STATE_RX) // != 1 ?
     MYDELAY.my_delay_us(10);
 
   moritz_on = 1;
+	DS("Z on\r\n");
 }
 
 void RfMoritzClass::handleAutoAck(uint8_t* enc)
 {
-  /* Debug ouput
+  //* Debug ouput
   DC('D');
   DC('Z');
   DH2(autoAckAddr[0]);
@@ -131,7 +136,7 @@ void RfMoritzClass::handleAutoAck(uint8_t* enc)
   DH2(enc[8]);
   DH2(enc[9]);
   DNL();
-  */
+  //   */
 
   //Send acks to when required by "spec"
   if((autoAckAddr[0] != 0 || autoAckAddr[1] != 0 || autoAckAddr[2] != 0) /* auto-ack enabled */
@@ -159,7 +164,7 @@ void RfMoritzClass::handleAutoAck(uint8_t* enc)
 void RfMoritzClass::task(void)
 {
   uint8_t enc[MAX_MORITZ_MSG];
-  uint8_t rssi;
+  uint8_t rssi, LQI;
 
   if(!moritz_on)
     return;
@@ -181,12 +186,13 @@ void RfMoritzClass::task(void)
 
     // RSSI is appended to RXFIFO
     rssi = CC1100.cc1100_sendbyte( 0 );
+
     // And Link quality indicator, too
-    /* LQI = */ CC1100.cc1100_sendbyte( 0 );
+    LQI = CC1100.cc1100_sendbyte( 0 );
 
     CC1100_DEASSERT;
 
-    handleAutoAck(enc);
+//  handleAutoAck(enc);
 
     if (tx_report & REP_BINTIME) {
 
@@ -198,18 +204,22 @@ void RfMoritzClass::task(void)
       for (uint8_t i=0; i<=enc[0]; i++)
         DH2( enc[i] );
       if (tx_report & REP_RSSI)
+			{
         DH2(rssi);
+        DH2(LQI);
+			}
       DNL();
     }
 
     return;
   }
 
-  if(CC1100.cc1100_readReg( CC1100_MARCSTATE ) == 17) {
+  if(CC1100.cc1100_readReg( CC1100_MARCSTATE ) == MARCSTATE_RXFIFO_OVERFLOW) {
     CC1100.ccStrobe( CC1100_SFRX  );
     CC1100.ccStrobe( CC1100_SIDLE );
     CC1100.ccStrobe( CC1100_SRX   );
   }
+
 }
 
 void RfMoritzClass::send(char *in)
@@ -220,7 +230,8 @@ void RfMoritzClass::send(char *in)
   uint8_t hblen = STRINGFUNC.fromhex(in+1, dec, MAX_MORITZ_MSG-1);
 
   if ((hblen-1) != dec[0]) {
-    DS_P(PSTR("LENERR\r\n"));
+    //DS_P(PSTR("LENERR\r\n"));
+		DS("LENERR\r\n");
     return;
   }
   sendraw(dec, 1);
@@ -233,7 +244,8 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
   //1kb/s = 1 bit/ms. we send 1 sec preamble + hblen*8 bits
   uint32_t sum = (longPreamble ? 100 : 0) + (hblen*8)/10;
   if (RfSend.credit_10ms < sum) {
-    DS_P(PSTR("LOVF\r\n"));
+    //DS_P(PSTR("LOVF\r\n"));
+		DS("LOVF\r\n");
     return;
   }
   RfSend.credit_10ms -= sum;
@@ -362,7 +374,8 @@ void RfMoritzClass::func(char *in)
     uint8_t dec[MAX_MORITZ_MSG];
     uint8_t hblen = STRINGFUNC.fromhex(in+2, dec, MAX_MORITZ_MSG-1);
     if ((hblen-1) != dec[0]) {
-      DS_P(PSTR("LENERR\r\n"));
+      //DS_P(PSTR("LENERR\r\n"));
+		  DS("LENERR\r\n");
       return;
     }
     sendraw(dec, in[1] == 's');
@@ -375,7 +388,7 @@ void RfMoritzClass::func(char *in)
 
   } else {                          // Off
     moritz_on = 0;
-
+		DS("Z off\r\n");
   }
 }
 

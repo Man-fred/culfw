@@ -188,10 +188,14 @@ void CC1100Class::ccInitChip(uint8_t cfg){
   moritz_on = 0; //loading this configuration overwrites moritz cfg
 #endif
 
-//esp8266  EIMSK &= ~_BV(CC1100_INT);                 
-//esp8266    SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
+  #ifndef ESP8266	
+		EIMSK &= ~_BV(CC1100_INT);
+    SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
+  #else
+		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
+    pinMode(CC1100_CS_PIN, OUTPUT);
+  #endif
   uint8_t cfg2 = cfg;
-  pinMode(CC1100_CS_PIN, OUTPUT);
   digitalWrite(CC1100_CS_PIN,HIGH);    
   delayMicroseconds(1);
 
@@ -332,7 +336,11 @@ void CC1100Class::ccsetpa(char *in){
 //--------------------------------------------------------------------
 void CC1100Class::ccTX(void){
   uint8_t cnt = 0xff;
-  EIMSK  &= ~_BV(CC1100_INT);
+  #ifndef ESP8266	
+		EIMSK &= ~_BV(CC1100_INT);
+  #else
+		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
+  #endif
 
   // Going from RX to TX does not work if there was a reception less than 0.5
   // sec ago. Due to CCA? Using IDLE helps to shorten this period(?)
@@ -349,7 +357,11 @@ void CC1100Class::ccRX(void){
   while(cnt-- &&
         (ccStrobe(CC1100_SRX) & CC1100_STATUS_STATE_BM) != CC1100_STATE_RX)
     MYDELAY.my_delay_us(10);
-  EIMSK |= _BV(CC1100_INT);
+  #ifndef ESP8266	
+		EIMSK |= _BV(CC1100_INT);
+  #else
+		GPC(CC1100_INT) |= ((0x3 & 0xF) << GPCI);//INT mode "mode"
+  #endif
 
 }
 

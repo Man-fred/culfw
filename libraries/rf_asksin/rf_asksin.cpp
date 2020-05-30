@@ -62,8 +62,13 @@ void
 RfAsksinClass::init(void)
 {
 
-  EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
-  SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN );   // CS as output
+  #ifndef ESP8266	
+    EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
+    SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
+  #else
+		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
+    pinMode(CC1100_CS_PIN, OUTPUT);
+  #endif
 
   CC1100_DEASSERT;                           // Toggle chip select signal
   MYDELAY.my_delay_us(30);
