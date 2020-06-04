@@ -138,9 +138,9 @@ void RfSendClass::sendraw(uint8_t *msg, uint8_t sync, uint8_t nbyte, uint8_t bit
 
 #ifdef HAS_MORITZ
   uint8_t restore_moritz = 0;
-  if(moritz_on) {
+  if(Moritz.on()) {
     restore_moritz = 1;
-    moritz_on = 0;
+    Moritz.on(0);
     RfReceive.set_txreport("21");
   }
 #endif

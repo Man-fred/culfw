@@ -32,43 +32,102 @@
  *
  * One message with 12 payload bytes takes (4 byte preamble + 4 byte sync + 12 byte payload) / 1kbit/s = 160 ms.
  */
-
-uint8_t moritz_on = 0;
-
-const uint8_t PROGMEM MORITZ_CFG[60] = {
+/*
+const PROGMEM uint8_t xCC1100_CFG[EE_CC1100_CFG_SIZE] = {
+// CULFW   IDX NAME     RESET STUDIO COMMENT
+   0x0D, // 00 IOCFG2   *29   *0B    GDO2 as serial output
+   0x2E, // 01 IOCFG1    2E    2E    Tri-State
+   0x2D, // 02 IOCFG0   *3F   *0C    GDO0 for input
+   0x07, // 03 FIFOTHR   07   *47    
+   0xD3, // 04 SYNC1     D3    D3    
+   0x91, // 05 SYNC0     91    91    
+   0x3D, // 06 PKTLEN   *FF    3D    
+   0x04, // 07 PKTCTRL1  04    04    
+   0x32, // 08 PKTCTRL0 *45    32    
+   0x00, // 09 ADDR      00    00    
+   0x00, // 0A CHANNR    00    00    
+   0x06, // 0B FSCTRL1  *0F    06    152kHz IF Frquency
+   0x00, // 0C FSCTRL0   00    00    
+   0x21, // 0D FREQ2    *1E    21    868.3 (def:800MHz)
+   0x65, // 0E FREQ1    *C4    65    
+   0x6a, // 0F FREQ0    *EC    e8    
+   0x55, // 10 MDMCFG4  *8C    55    bWidth 325kHz
+   0xe4, // 11 MDMCFG3  *22   *43    Drate:1500 ((256+228)*2^5)*26000000/2^28
+   0x30, // 12 MDMCFG2  *02   *B0    Modulation: ASK
+   0x23, // 13 MDMCFG1  *22    23    
+   0xb9, // 14 MDMCFG0  *F8    b9    ChannelSpace: 350kHz
+   0x00, // 15 DEVIATN  *47    00    
+   0x07, // 16 MCSM2     07    07    
+   0x00, // 17 MCSM1     30    30    
+   0x18, // 18 MCSM0    *04    18    Calibration: RX/TX->IDLE
+   0x14, // 19 FOCCFG   *36    14    
+   0x6C, // 1A BSCFG     6C    6C    
+   0x07, // 1B AGCCTRL2 *03   *03    42 dB instead of 33dB
+   0x00, // 1C AGCCTRL1 *40   *40    
+   0x90, // 1D AGCCTRL0 *91   *92    4dB decision boundery
+   0x87, // 1E WOREVT1   87    87    
+   0x6B, // 1F WOREVT0   6B    6B    
+   0xF8, // 20 WORCTRL   F8    F8    
+   0x56, // 21 FREND1    56    56    
+   0x11, // 22 FREND0   *16    17    0x11 for no PA ramping
+   0xE9, // 23 FSCAL3   *A9    E9    
+   0x2A, // 24 FSCAL2   *0A    2A
+   0x00, // 25 FSCAL1    20    00
+   0x1F, // 26 FSCAL0    0D    1F    
+   0x41, // 27 RCCTRL1   41    41    
+   0x00, // 28 RCCTRL0   00    00    
+*/
+const uint8_t PROGMEM MORITZ_CFG[EE_CC1100_CFG_SIZE] = {
+//   MAX   IDX NAME     RESET STUDIO CULFW COMMENT for MAX
 //     0x00, 0x08,
-     0x00, 0x07, //IOCFG2: GDO2_CFG=7: Asserts when a packet has been received with CRC OK. De-asserts when the first byte is read from the RX FIFO
-     0x02, 0x46, //IOCFG0
-     0x04, 0xC6, //SYNC1
-     0x05, 0x26, //SYNC0
-     0x0B, 0x06, //FSCTRL1
-     0x10, 0xC8, //MDMCFG4 DRATE_E=8,
-     0x11, 0x93, //MDMCFG3 DRATE_M=147, data rate = (256+DRATE_M)*2^DRATE_E/2^28*f_xosc = (9992.599) 1kbit/s (at f_xosc=26 Mhz)
-     0x12, 0x03, //MDMCFG2 see above
-     0x13, 0x22,  //MDMCFG1 CHANSPC_E=2, NUM_PREAMBLE=2 (4 bytes), FEC_EN = 0 (disabled)
-    //0x13, 0x72,  //MDMCFG1 CHANSPC_E=2, NUM_PREAMBLE=7 (24 bytes), FEC_EN = 0 (disabled)
-     0x15, 0x34, //DEVIATN
+   0x07, // 00 IOCFG2:               0D?    GDO2_CFG=7: Asserts when a packet has been received with CRC OK. De-asserts when the first byte is read from the RX FIFO
+   0x2E, // 01 IOCFG1    2E+   2E    2E    Tri-State
+	 0x46, // 02 IOCFG0                2D?    Deasserts when sync word has been sent / received
+   0x07, // 03 FIFOTHR   07+  *47    07    FIFO TX/RX 33/32
+   0xC6, // 04 SYNC1     D3    D3    D3?    high byte
+   0x26, // 05 SYNC0     91    91    91?    low byte
+   0xFF, // 06 PKTLEN   *FF+   3D    3D?
+   0x0C, // 07 PKTCTRL1  04    04    04?    automatic flush + RSSI, LQI
+   0x45, // 08 PKTCTRL0 *45+   32    32?
+   0x00, // 09 ADDR      00+   00    00
+   0x00, // 0A CHANNR    00+   00    00
+   0x06, // 0B FSCTRL1  *0F    06    06    152kHz IF Frquency
+   0x00, // 0C FSCTRL0   00+   00    00
+   0x21, // 0D FREQ2    *1E    21    21    868.3 (def:800MHz)
+   0x65, // 0E FREQ1    *C4    65    65    
+   0x6A, // 0F FREQ0    *EC    e8    6A    see CC1100         
+   0xC8, // 10 MDMCFG4               55?    DRATE_E=8,
+   0x93, //    MDMCFG3               E4?    DRATE_M=147, data rate = (256+DRATE_M)*2^DRATE_E/2^28*f_xosc = (9992.599) 1kbit/s (at f_xosc=26 Mhz)
+   0x03, //    MDMCFG2               30?    see above
+   0x22, // 13 MDMCFG1               23?    CHANSPC_E=2, NUM_PREAMBLE=2 (4 bytes), FEC_EN = 0 (disabled)
+         //0x13, 0x72,  //MDMCFG1          CHANSPC_E=2, NUM_PREAMBLE=7 (24 bytes), FEC_EN = 0 (disabled)
+   0xb9, // 14 MDMCFG0  *F8    b9+   b9    ChannelSpace: 350kHz
+   0x34, // 15 DEVIATN               00?
+   0x07, // 16 MCSM2     07+    07   07    RX_TIME = 7 (Timeout for sync word search in RX for both WOR mode and normal RX operation = Until end of packet) RX_TIME_QUAL=0 (check if sync word is found)
 //     0x17, 0x00,
-     0x17, 0x3F, //MCSM1: TXOFF=RX, RXOFF=RX, CCA_MODE=3:If RSSI below threshold unless currently receiving a packet
-     0x18, 0x28, //MCSM0: PO_TIMEOUT=64, FS_AUTOCAL=2: When going from idle to RX or TX automatically
-     0x19, 0x16, //FOCCFG
-     0x1B, 0x43, //AGCTRL2
-     0x21, 0x56, //FREND1
-     0x25, 0x00, //FSCAL1
-     0x26, 0x11, //FSCAL0
-     0x0D, 0x21, //FREQ2
-     0x0E, 0x65, //FREQ1
-     0x0F, 0x6A, //FREQ0
-     0x07, 0x0C, //PKTCTRL1
-     0x16, 0x07, //MCSM2 RX_TIME = 7 (Timeout for sync word search in RX for both WOR mode and normal RX operation = Until end of packet) RX_TIME_QUAL=0 (check if sync word is found)
-     0x20, 0xF8, //WORCTRL, WOR_RES=00 (1.8-1.9 sec) EVENT1=7 (48, i.e. 1.333 – 1.385 ms)
-     0x1E, 0x87, //WOREVT1 EVENT0[high]
-     0x1F, 0x6B, //WOREVT0 EVENT0[low]
-     0x29, 0x59, //FSTEST
-     0x2C, 0x81, //TEST2
-     0x2D, 0x35, //TEST1
-     0x3E, 0xC3, //?? Readonly PATABLE?
-     0xff
+   0x3F, // 17 MCSM1                 00?    TXOFF=RX, RXOFF=RX, CCA_MODE=3:If RSSI below threshold unless currently receiving a packet
+   0x28, // 18 MCSM0                 18?    PO_TIMEOUT=64, FS_AUTOCAL=2: When going from idle to RX or TX automatically
+   0x16, // 19 FOCCFG                14?
+   0x6C, // 1A BSCFG     6C+    6C   6c
+   0x43, //    AGCTRL2               07?
+   0x00, // 1C AGCCTRL1 *40   *40    00    see CC1100 
+   0x90, // 1D AGCCTRL0 *91   *92    90    see CC1100 4dB decision boundery
+   0x87, // 1E WOREVT1   87    87    87    EVENT0[high]
+   0x6B, // 1F WOREVT0   6B    6B    6b    EVENT0[low] 
+   0xF8, // 20 WORCTRL   F8    F8    F8    WOR_RES=00 (1.8-1.9 sec) EVENT1=7 (48, i.e. 1.333 – 1.385 ms)
+   0x56, // 21 FREND1    56    56    56
+   0x11, // 22 FREND0   *16    17    11    see CC1100 0x11 for no PA ramping
+   0xE9, // 23 FSCAL3   *A9    E9+   E9 
+   0x2A, // 24 FSCAL2   *0A    2A+   2A
+   0x00, // 25 FSCAL1    20    00    00
+   0x11, // 26 FSCAL0    0D    1F    1F?
+   0x41, // 27 RCCTRL1   41+   41    41
+   0x00  // 28 RCCTRL0   00+   00    00
+		 
+   //  0x29, 0x59, //FSTEST  "For test only. Do not write to this register."
+   //  0x2C, 0x81, //TEST2
+   //  0x2D, 0x35, //TEST1
+   //  0x3E, 0xC3, //?? Readonly PATABLE?
 };
 
 uint8_t RfMoritzClass::autoAckAddr[] = {0, 0, 0};
@@ -76,37 +135,39 @@ uint8_t RfMoritzClass::fakeWallThermostatAddr[] = {0, 0, 0};
 uint32_t RfMoritzClass::lastSendingTicks = 0;
 
 RfMoritzClass::RfMoritzClass(){
+  onState = 0;
+}
+
+uint8_t RfMoritzClass::on(uint8_t onNew){
+	if (onNew == 3){
+		DC('Zi');DH2(onNew);DNL();
+		onState = 0;
+	} else if (onNew < 2){
+	  if (onNew != onState){
+			onState = onNew;
+			DC('Z');DH2(onState);DNL();
+		}
+	}
+	return onState;
 }
 
 void RfMoritzClass::init(void)
 {
+  CC1100.manualReset(0);
 
-  #ifndef ESP8266	
-   EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
-   SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
-  #else
-		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
-    pinMode(CC1100_CS_PIN, OUTPUT);
-  #endif
-
-  CC1100_DEASSERT;                           // Toggle chip select signal
-  MYDELAY.my_delay_us(30);
-  CC1100_ASSERT;
-  MYDELAY.my_delay_us(30);
-  CC1100_DEASSERT;
-  MYDELAY.my_delay_us(45);
-
-  CC1100.ccStrobe( CC1100_SRES );                   // Send SRES command
-  MYDELAY.my_delay_us(100);
+	// not in c -->
+	CC1100.ccStrobe(CC1100_SFRX);
+  CC1100.ccStrobe(CC1100_SFTX);
+	// not in c <--
+ 
+  CC1100_ASSERT;                             // load configuration
+  CC1100.cc1100_sendbyte( 0 | CC1100_WRITE_BURST );
 
   // load configuration
-  for (uint8_t i = 0; i<60; i += 2) {
-    if (pgm_read_byte( &MORITZ_CFG[i] )>0x40)
-      break;
-
-    CC1100.cc1100_writeReg( pgm_read_byte(&MORITZ_CFG[i]),
-                     pgm_read_byte(&MORITZ_CFG[i+1]) );
+  for(uint8_t i = 0; i < EE_CC1100_CFG_SIZE; i++) {
+	  CC1100.cc1100_sendbyte(pgm_read_byte(&MORITZ_CFG[i]));
   }
+  CC1100_DEASSERT;
 
   CC1100.ccStrobe( CC1100_SCAL );
 
@@ -117,8 +178,7 @@ void RfMoritzClass::init(void)
   while(cnt-- && (CC1100.ccStrobe( CC1100_SRX ) & CC1100_STATUS_STATE_BM) != CC1100_STATE_RX) // != 1 ?
     MYDELAY.my_delay_us(10);
 
-  moritz_on = 1;
-	DS("Z on\r\n");
+  on(1);
 }
 
 void RfMoritzClass::handleAutoAck(uint8_t* enc)
@@ -166,9 +226,8 @@ void RfMoritzClass::task(void)
   uint8_t enc[MAX_MORITZ_MSG];
   uint8_t rssi, LQI;
 
-  if(!moritz_on)
+  if(!onState)
     return;
-
   // see if a CRC OK pkt has been arrived
   if(bit_is_set( CC1100_IN_PORT, CC1100_IN_PIN )) {
     //errata #1 does not affect us, because we wait until packet is completely received
@@ -206,20 +265,20 @@ void RfMoritzClass::task(void)
       if (tx_report & REP_RSSI)
 			{
         DH2(rssi);
-        DH2(LQI);
+        //DH2(LQI);
 			}
       DNL();
     }
 
     return;
   }
+return;
 
   if(CC1100.cc1100_readReg( CC1100_MARCSTATE ) == MARCSTATE_RXFIFO_OVERFLOW) {
     CC1100.ccStrobe( CC1100_SFRX  );
     CC1100.ccStrobe( CC1100_SIDLE );
     CC1100.ccStrobe( CC1100_SRX   );
   }
-
 }
 
 void RfMoritzClass::send(char *in)
@@ -251,7 +310,7 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
   RfSend.credit_10ms -= sum;
 
   // in Moritz mode already?
-  if(!moritz_on) {
+  if(!onState) {
     init();
   }
 
@@ -332,7 +391,7 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
     init();
   }
 
-  if(!moritz_on) {
+  if(!onState) {
     RfReceive.set_txrestore();
   }
   lastSendingTicks = CLOCK.ticks;
@@ -387,8 +446,7 @@ void RfMoritzClass::func(char *in)
     STRINGFUNC.fromhex(in+2, fakeWallThermostatAddr, 3);
 
   } else {                          // Off
-    moritz_on = 0;
-		DS("Z off\r\n");
+    on(0);
   }
 }
 

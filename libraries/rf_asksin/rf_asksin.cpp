@@ -61,24 +61,7 @@ static unsigned char asksin_update_mode = 0;
 void
 RfAsksinClass::init(void)
 {
-
-  #ifndef ESP8266	
-    EIMSK &= ~_BV(CC1100_INT);                 // disable INT - we'll poll...
-    SET_BIT( CC1100_CS_DDR, CC1100_CS_PIN ); // CS as output
-  #else
-		GPC(CC1100_INT) &= ~(0xF << GPCI);//INT mode disabled
-    pinMode(CC1100_CS_PIN, OUTPUT);
-  #endif
-
-  CC1100_DEASSERT;                           // Toggle chip select signal
-  MYDELAY.my_delay_us(30);
-  CC1100_ASSERT;
-  MYDELAY.my_delay_us(30);
-  CC1100_DEASSERT;
-  MYDELAY.my_delay_us(45);
-
-  CC1100.ccStrobe( CC1100_SRES );                   // Send SRES command
-  MYDELAY.my_delay_us(100);
+  CC1100.manualReset();
 
   // load configuration
   for (uint8_t i = 0; i < sizeof(ASKSIN_CFG); i += 2) {
