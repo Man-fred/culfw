@@ -160,8 +160,10 @@ void CC1100Class::deassert(void) {
 	while(digitalRead(SPI_MISO));
 	digitalWrite(SPI_SS,1);
 }
+#endif
 
 uint8_t CC1100Class::cc1100_sendbyte(uint8_t data){
+#ifdef ESP8266
   /*//SPI.cpp
 	while(SPI1CMD & SPIBUSY) {}
 	setDataBits(8);
@@ -171,15 +173,12 @@ uint8_t CC1100Class::cc1100_sendbyte(uint8_t data){
 	return (uint8_t) (SPI1W0 & 0xff);
   */
   return SPI.transfer(data);
-  
-}
 #else
-  uint8_t CC1100Class::cc1100_sendbyte(uint8_t data){
 	SPDR = data;		        // send byte
 	while (!(SPSR & _BV (SPIF)));	// wait until transfer finished
 	return SPDR;
-}
 #endif
+}
 
 // The manual power-up sequence
 // all internal registers and states are set to the default, IDLE state. 
@@ -359,6 +358,9 @@ void CC1100Class::ccTX(void){
   while(cnt-- &&
         (ccStrobe(CC1100_STX) & CC1100_STATUS_STATE_BM) != CC1100_STATE_TX)
     MYDELAY.my_delay_us(10);
+  if (cnt == 0){
+		DC('D');DC('Z');DC('c');DC('n');DC('t');DH2(CC1100_STX);DNL();
+	}
 }
 
 //--------------------------------------------------------------------
@@ -371,7 +373,7 @@ void CC1100Class::ccRX(void){
   #ifndef ESP8266	
 		EIMSK |= _BV(CC1100_INT);
   #else
-		GPC(CC1100_INT) |= ((0x3 & 0xF) << GPCI);//INT mode "mode"
+		GPC(CC1100_INT) |= ((0x3 & 0xF) << GPCI);//INT mode "mode" (0x3)
   #endif
   #ifdef HAS_MORITZ
 	  Moritz.on(0);
@@ -432,14 +434,24 @@ uint8_t CC1100Class::cc1100_readReg(uint8_t addr){
 
 //--------------------------------------------------------------------
 uint8_t CC1100Class::readStatus(uint8_t addr){
-  uint8_t ret;
-	digitalWrite(SPI_SS,0);
-	while(digitalRead(SPI_MISO));
-  ret = SPI.transfer(addr|CC1100_READ_BURST);
-  ret = SPI.transfer(0);
-	while(digitalRead(SPI_MISO));
-	digitalWrite(SPI_SS,1);
-  return ret;
+  uint8_t ret0,ret1 = 0xFF;
+	uint8_t cnt = 0xFF;
+
+	CC1100_ASSERT;
+  SPI.transfer(addr|CC1100_READ_BURST);
+  ret0 = SPI.transfer(0);
+	CC1100_DEASSERT;
+	while (cnt-- && (ret0 != ret1) ){
+		ret1 = ret0;
+		CC1100_ASSERT;
+		SPI.transfer(addr|CC1100_READ_BURST);
+		ret0 = SPI.transfer(0);
+		CC1100_DEASSERT;
+	}
+  if (cnt == 0){
+		DC('D');DC('Z');DC('c');DC('n');DC('t');DH2(addr);DNL();
+	}
+	return ret0;
 }
 
 void CC1100Class::cc1100_writeReg(uint8_t addr, uint8_t data){

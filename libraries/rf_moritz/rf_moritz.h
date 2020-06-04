@@ -13,10 +13,10 @@ public:
 	void func(char *in);
 	static uint8_t autoAckAddr[3];
 	static uint8_t fakeWallThermostatAddr[3];
-	static uint32_t lastSendingTicks;
 	uint8_t on(uint8_t onNew = 2);
 private:
   uint8_t onState;
+  uint32_t lastSendingTicks;
 
   void send(char *in);
 	void sendraw(uint8_t* buf, int longPreamble);
