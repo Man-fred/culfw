@@ -35,14 +35,14 @@
 const uint8_t PROGMEM MORITZ_CFG[EE_CC1100_CFG_SIZE] = {
 //   MAX   IDX NAME     RESET STUDIO CULFW COMMENT for MAX
 //     0x00, 0x08,
-   0x07,//0x08, // 00 IOCFG2:               0D?    GDO2_CFG=7: Asserts when a packet has been received with CRC OK. De-asserts when the first byte is read from the RX FIFO
+   0x07,//MAX-Actor: 0x08, // 00 IOCFG2:               0D?    GDO2_CFG=7: Asserts when a packet has been received with CRC OK. De-asserts when the first byte is read from the RX FIFO
    0x2E, // 01 IOCFG1    2E+   2E    2E    Tri-State
 	 0x46, // 02 IOCFG0                2D?    Deasserts when sync word has been sent / received
    0x07, // 03 FIFOTHR   07+  *47    07    FIFO TX/RX 33/32
    0xC6, // 04 SYNC1     D3    D3    D3?    high byte
    0x26, // 05 SYNC0     91    91    91?    low byte
    0xFF, // 06 PKTLEN   *FF+   3D    3D?
-   0x0C,//0x4C, // 07 PKTCTRL1  04    04    04?    automatic flush + RSSI, LQI
+   0x4C,//.MAX-Actor: 0x4C, culfw 0x0C// 07 PKTCTRL1  04    04    04?    automatic flush + RSSI, LQI
    0x45, // 08 PKTCTRL0 *45+   32    32?
    0x00, // 09 ADDR      00+   00    00
    0x00, // 0A CHANNR    00+   00    00
@@ -51,14 +51,14 @@ const uint8_t PROGMEM MORITZ_CFG[EE_CC1100_CFG_SIZE] = {
    0x21, // 0D FREQ2    *1E    21    21    868.3 (def:800MHz)
    0x65, // 0E FREQ1    *C4    65    65    
    0x6A, // 0F FREQ0    *EC    e8    6A    see CC1100         
-   0xC8, // 10 MDMCFG4               55?    DRATE_E=8,
-   0x93, //    MDMCFG3               E4?    DRATE_M=147, data rate = (256+DRATE_M)*2^DRATE_E/2^28*f_xosc = (9992.599) 1kbit/s (at f_xosc=26 Mhz)
+   0xC8, // 10 MDMCFG4               55    MAX!: DRATE_E=8,DRATE_M=147, data rate = (256+DRATE_M)*2^DRATE_E/2^28*f_xosc = (9992.599) ~1kbit/s (at f_xosc=26 Mhz)
+   0x93, //    MDMCFG3               E4    MAX!: 
    0x03, //    MDMCFG2               30?    see above
    0x22, // 13 MDMCFG1               23?    CHANSPC_E=2, NUM_PREAMBLE=2 (4 bytes), FEC_EN = 0 (disabled)
          //0x13, 0x72,  //MDMCFG1          CHANSPC_E=2, NUM_PREAMBLE=7 (24 bytes), FEC_EN = 0 (disabled)
    0xb9, // 14 MDMCFG0  *F8    b9+   b9    ChannelSpace: 350kHz
    0x34, // 15 DEVIATN               00?
-   0x07,//0x1C, // 16 MCSM2     07+    07   07    RX_TIME = 7 (Timeout for sync word search in RX for both WOR mode and normal RX operation = Until end of packet) RX_TIME_QUAL=0 (check if sync word is found)
+   0x07,//MAX-Actor: 0x1C, // 16 MCSM2     07+    07   07    RX_TIME = 7 (Timeout for sync word search in RX for both WOR mode and normal RX operation = Until end of packet) RX_TIME_QUAL=0 (check if sync word is found)
    0x3F,//aus Wiki:0x00,//0x3F, // 17 MCSM1                 00?   TXOFF=RX, RXOFF=RX, CCA_MODE=3:If RSSI below threshold unless currently receiving a packet
    0x18, // 18 MCSM0                 18?   orig.MAX 28; PO_TIMEOUT=64, FS_AUTOCAL=2: When going from idle to RX or TX automatically
    0x16, // 19 FOCCFG                14?
@@ -68,9 +68,9 @@ const uint8_t PROGMEM MORITZ_CFG[EE_CC1100_CFG_SIZE] = {
    0x90, // 1D AGCCTRL0 *91   *92    90    see CC1100 4dB decision boundery
    0x87, // 1E WOREVT1   87    87    87    EVENT0[high]
    0x6B, // 1F WOREVT0   6B    6B    6b    EVENT0[low] 
-   0xF8,//0x78, // 20 WORCTRL   F8    F8    F8    WOR_RES=00 (1.8-1.9 sec) EVENT1=7 (48, i.e. 1.333 – 1.385 ms)
+   0x78,//MAX-Actor: 0x78, culfw 0xF8 // 20 WORCTRL   F8    F8    F8    WOR_RES=00 (1.8-1.9 sec) EVENT1=7 (48, i.e. 1.333 – 1.385 ms)
    0x56, // 21 FREND1    56    56    56
-   0x11, // 22 FREND0   *16    17    11    see CC1100 0x11 for no PA ramping
+   0x10, // 22 FREND0   *16    17    11    in culfw 0x11, see CC1100 0x11 for no PA ramping
    0xE9, // 23 FSCAL3   *A9    E9+   E9 
    0x2A, // 24 FSCAL2   *0A    2A+   2A
    0x00, // 25 FSCAL1    20    00    00
@@ -108,19 +108,27 @@ uint8_t RfMoritzClass::on(uint8_t onNew){
 void RfMoritzClass::init(void)
 {
   CC1100.manualReset(0);
-
+  //test: +10db, no PA-ramping
+  CC1100_ASSERT;
+  CC1100.cc1100_sendbyte( CC1100_PATABLE | CC1100_WRITE_SINGLE );
+  CC1100.cc1100_sendbyte(0xC3);
+  CC1100_DEASSERT;
 	// not in c -->
-	CC1100.ccStrobe(CC1100_SFRX);
-  CC1100.ccStrobe(CC1100_SFTX);
+	//CC1100.ccStrobe(CC1100_SFRX);
+  //CC1100.ccStrobe(CC1100_SFTX);
 	// not in c <--
   
 	// load configuration
   CC1100_ASSERT;                             
   CC1100.cc1100_sendbyte( 0 | CC1100_WRITE_BURST );
-  for(uint8_t i = 0; i < EE_CC1100_CFG_SIZE; i++) {
+  for(uint8_t i = 0; i < 0x29; i++) {
 	  CC1100.cc1100_sendbyte(pgm_read_byte(&MORITZ_CFG[i]));
   }
   CC1100_DEASSERT;
+  //CC1100.cc1100_writeReg(0x29, 0x59); //FSTEST  "For test only. Do not write to this register."
+  //CC1100.cc1100_writeReg(0x2C, 0x81); //TEST2
+  //CC1100.cc1100_writeReg(0x2D, 0x35); //TEST1
+  //CC1100.cc1100_writeReg(0x3E, 0xC3); //?? Readonly PATABLE?
 
   //auto? CC1100.ccStrobe( CC1100_SCAL );
   //auto? MYDELAY.my_delay_ms(4); // 4ms: Found by trial and error
@@ -181,7 +189,7 @@ void RfMoritzClass::task(void)
 
   if(!onState)
     return;
-  // see if a CRC OK pkt has been arrived
+  // see if a CRC OK pkt has been arrived (GDO2 high)
   if(bit_is_set( CC1100_IN_PORT, CC1100_IN_PIN )) {
     //errata #1 does not affect us, because we wait until packet is completely received
     enc[0] = CC1100.cc1100_readReg( CC1100_RXFIFO ) & 0x7f; // read len
@@ -251,9 +259,13 @@ void RfMoritzClass::send(char *in)
 /* longPreamble is necessary for unsolicited messages to wakeup the receiver */
 void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
 {
+	uint8_t in_moritz = 1;
   uint8_t hblen = dec[0]+1;
-  //1kb/s = 1 bit/ms. we send 1 sec preamble + hblen*8 bits
-  uint32_t sum = (longPreamble ? 100 : 0) + (hblen*8)/10;
+	uint8_t tst[MAX_MORITZ_MSG+1];
+	uint8_t res[MAX_MORITZ_MSG+1];
+	uint8_t mst[MAX_MORITZ_MSG+1];
+  //10kb/s = 10 bit/ms. we send 1 sec preamble + hblen*8 bits
+  uint32_t sum = (longPreamble ? 100 : 0) + (hblen*8)/100;
   if (RfSend.credit_10ms < sum) {
     //DS_P(PSTR("LOVF\r\n"));
 		DS("LOVF\r\n");
@@ -263,11 +275,13 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
 
   // in Moritz mode already?
   if(!onState) {
+		// no -> temporary moritz-mode
+		in_moritz = 0;
     init();
   }
 	
   uint8_t marcstate = (CC1100.readStatus( CC1100_MARCSTATE ) & 0x1F);
-  if(marcstate < MARCSTATE_RX or marcstate > MARCSTATE_RX_RST) { //error
+  if(marcstate != MARCSTATE_RX) { //error
     DC('Z');
     DC('E');
     DC('R');
@@ -292,6 +306,7 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
    * start sending - CC1101 will send preamble continuously until TXFIFO is filled.
    * The preamble will wake up devices. See http://e2e.ti.com/support/low_power_rf/f/156/t/142864.aspx
    * It will not go into TX mode instantly if channel is not clear (see CCA_MODE), thus ccTX tries multiple times */
+
   CC1100.ccTX();
 	
   marcstate = (CC1100.readStatus( CC1100_MARCSTATE ) & 0x1F);
@@ -308,31 +323,70 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
   }
 
   if(longPreamble) {
-    /* Send preamble for 1 sec. Keep in mind that waiting for too long may trigger the watchdog (2 seconds on CUL) */
+    // Send preamble for 1 sec. Keep in mind that waiting for too long may trigger the watchdog (2 seconds on CUL) 
     for(int i=0;i<10;++i)
       MYDELAY.my_delay_ms(100); //arg is uint_8, so loop
   }
 
   // send
-  CC1100_ASSERT;
-  CC1100.cc1100_sendbyte(CC1100_WRITE_BURST | CC1100_TXFIFO);
-
-  for(uint8_t i = 0; i < hblen; i++) {
-    CC1100.cc1100_sendbyte(dec[i]);
+	uint8_t i=0;
+	uint8_t j=0;
+	uint8_t loop = 99;
+Serial.println(micros());  
+	CC1100_ASSERT;
+  //res[j] = CC1100.cc1100_sendbyte(CC1100_SFTX);
+	//mst[j] = SPI.transfer(0);
+	res[j] = SPI.transfer(CC1100_MARCSTATE|CC1100_READ_BURST);
+	mst[j] = SPI.transfer(0);
+	while (((mst[j] & 0x1F) != MARCSTATE_TX) && j < hblen && loop--){
+	  res[j+1] = SPI.transfer(CC1100_MARCSTATE|CC1100_READ_BURST);
+	  mst[j+1] = SPI.transfer(0);
+		if (res[j+1] != res[j] || mst[j+1] != mst[j])
+			j++;
+	}
+	tst[hblen] = CC1100.cc1100_sendbyte(0x7F);//CC1100_WRITE_BURST | CC1100_TXFIFO);
+  for(i = 0; i < hblen; i++) {
+		//tst[i] = CC1100.cc1100_sendbyte( CC1100_TXFIFO|CC1100_WRITE_SINGLE );
+		MYDELAY.my_delay_us(50);
+    tst[i] = CC1100.cc1100_sendbyte(dec[i]);
   }
-
+	MYDELAY.my_delay_us(50);
   CC1100_DEASSERT;
+	
+	delayMicroseconds(4);
+	CC1100_ASSERT;
+	res[++j] = SPI.transfer(CC1100_TXBYTES|CC1100_READ_BURST);
+  mst[j] = SPI.transfer(0);
+  CC1100_DEASSERT;
+Serial.println(micros());  
 
-  //Wait for sending to finish (CC1101 will go to RX state automatically
+
+  for( i = 0; i < hblen; i++) {
+    Serial.print(dec[i]<0x10 ? "  " : " ");Serial.print(dec[i],HEX);
+  }
+  Serial.println(" dec");
+  for( i = 0; i <= hblen; i++) {
+    Serial.print(tst[i]<0x10 ? "  " : " ");Serial.print(tst[i],HEX);
+  }
+  Serial.println(" tst");
+  for( i = 0; i <=j; i++) {
+    Serial.print(res[i]<0x10 ? "  " : " ");Serial.print(res[i],HEX);
+  }
+  Serial.println(" res");
+  for( i = 0; i <=j; i++) {
+    Serial.print(mst[i]<0x10 ? "  " : " ");Serial.print(mst[i],HEX);
+  }
+  Serial.println(" mst");
+  // * only debug? /Wait for sending to finish (CC1101 will go to RX state automatically
   //after sending
-  uint8_t i;
+
   for(i=0; i< 200;++i) {
-   marcstate = (CC1100.readStatus( CC1100_MARCSTATE ) & 0x1F);
-   if( marcstate == MARCSTATE_RX)
+    marcstate = (CC1100.readStatus( CC1100_MARCSTATE ) & 0x1F);
+    if( marcstate == MARCSTATE_RX)
       break; //now in RX, good
     //if( CC1100.cc1100_readReg( CC1100_MARCSTATE ) != MARCSTATE_TX)
     //  break; //neither in RX nor TX, probably some error
-    MYDELAY.my_delay_ms(1);
+    MYDELAY.my_delay_us(100);
   }
 
   if(marcstate != MARCSTATE_RX) { //error
@@ -345,8 +399,8 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
     DNL();
     init();
   }
-
-  if(!onState) {
+  // only debug? */
+  if(!in_moritz) {
     RfReceive.set_txrestore();
   }
   lastSendingTicks = CLOCK.ticks;

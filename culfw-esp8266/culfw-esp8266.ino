@@ -162,6 +162,8 @@ void start_bootloader(void)
 void spi_init() {
   SPI.begin();
   SPI.setBitOrder(MSBFIRST);
+  SPI.setClockDivider(SPI_CLOCK_DIV2); // neu moritz
+  
 }
 
 void Serial_Task() {
