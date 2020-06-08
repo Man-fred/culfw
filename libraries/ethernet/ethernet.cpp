@@ -231,7 +231,7 @@ void EthernetClass::dumppkt(void)
   DC('e');DC(' ');
   DU(uip_len,5);
 
-  display_channel &= ~DISPLAY_TCP;
+  display.channel &= ~DISPLAY_TCP;
   uint8_t ole = log_enabled;
   log_enabled = 0;
   DC(' '); DC('d'); DC(' '); display_mac(a); a+= sizeof(struct uip_eth_addr);
@@ -241,7 +241,7 @@ void EthernetClass::dumppkt(void)
 
   if(eth_debug > 2)
     dumpmem(a, uip_len - sizeof(struct uip_eth_hdr));
-  display_channel |= DISPLAY_TCP;
+  display.channel |= DISPLAY_TCP;
   log_enabled = ole;
 #endif
 }
@@ -322,8 +322,8 @@ void EthernetClass::Task(void) {
 				}
 			}
 			ip_active = i;
-			TTYdata.analyze_ttydata(DISPLAY_USB|DISPLAY_TCP);
-			//TTYdata.analyze_ttydata(DISPLAY_TCP);
+			//TTYdata.analyze_ttydata(DISPLAY_USB|DISPLAY_TCP);
+			TTYdata.analyze_ttydata(DISPLAY_TCP);
 		} else {
 			for(uint8_t k=i; k<TCP_MAX-1; k++){
 				Tcp[k] = Tcp[k+1];

@@ -66,13 +66,14 @@ FastRFClass::Task(void)
     for(uint8_t i=0; i<len; i++)
       buf[i] = CC1100.cc1100_sendbyte( 0 );
     CC1100_DEASSERT;
-
-    display.channel=DISPLAY_USB;
+    //debug to USB
+		uint8_t odc = display.channel;
+		display.channel = DISPLAY_USB;
     uint8_t i;
     for(i=0; i<len; i++)
       DC(buf[i]);
     DNL();
-    display.channel=0xff;
+    display.channel = odc;
   }
 
   fastrf_on = FASTRF_MODE_ON;

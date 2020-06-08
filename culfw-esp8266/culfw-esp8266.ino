@@ -163,7 +163,6 @@ void spi_init() {
   SPI.begin();
   SPI.setBitOrder(MSBFIRST);
   SPI.setClockDivider(SPI_CLOCK_DIV2); // neu moritz
-  
 }
 
 void Serial_Task() {
@@ -174,7 +173,7 @@ void Serial_Task() {
   }
   //???output_flush_func = CDC_Task;
   //input_handle_func(DISPLAY_USB);
-  TTYdata.analyze_ttydata(1);//DISPLAY_USB
+  TTYdata.analyze_ttydata(DISPLAY_USB);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -207,6 +206,7 @@ inline void ICACHE_RAM_ATTR IsrTimer1(void)
 }
 
 void loop20s(unsigned long counter) {
+  /* timer/interrupt  debugging
   Serial.print(micros());    // Chip
   Serial.print(" loop ");
   Serial.print(TimerMicros); // last Loop()
@@ -232,6 +232,7 @@ void loop20s(unsigned long counter) {
   GDO2Toggle = 0;
   timer1count = 0;
   gdo2count = 0;
+  */
 }
 
 void loop1Hz(unsigned long counter) {
@@ -240,8 +241,6 @@ void loop1Hz(unsigned long counter) {
 
 void loop125Hz(unsigned long counter) {
 }
-
-void write_eeprom(char *data)         { FNcol.write_eeprom(data); };
 
 const t_fntab fntab[] = {
 #ifdef HAS_ASKSIN
@@ -308,6 +307,8 @@ const t_fntab fntab[] = {
     { 'q', [&Ethernet](char *data) { Ethernet.close(data); } },
   #endif
   { 'R', [&FNcol](char *data) { FNcol.read_eeprom(data); } },
+  // esp8266/CUN-special
+  { 's', [&display](char *data) { display.func(data); } },
   { 'T', [&FHT](char *data) { FHT.fhtsend(data); } },
   { 't', [&CLOCK](char *data) { CLOCK.gettime(data); } },
   #ifdef HAS_UNIROLL
@@ -421,6 +422,7 @@ void setup() {
 #endif
 #ifdef HAS_ETHERNET
   display.channel |= DISPLAY_TCP;
+  display.channel = DISPLAY_USB;
   Ethernet.init();
   Serial.printf("\nChannel %d \n", display.channel);
 #endif
@@ -446,9 +448,9 @@ void loop() {
       temp = Timer1Hz/20;
       if (temp != Timer20s) {
         Timer20s = temp;
-        //loop20s(Timer20s);
+        loop20s(Timer20s);
       }
-    }*/
+    } // 1sec loop */
   }
   CheckGDO();
   

@@ -286,7 +286,7 @@ void CC1100Class::ccInitChip(uint8_t cfg){
 void CC1100Class::cc_set_pa(uint8_t idx){
   uint8_t t = EE_CC1100_PA;
   if(idx > 9)
-    idx = 8;
+    idx = 9;
 
 #ifdef FULL_CC1100_PA
   const uint8_t *f = CC1100_PA+idx*8;
@@ -456,7 +456,6 @@ uint8_t CC1100Class::readStatus(uint8_t addr){
 
 void CC1100Class::cc1100_writeReg(uint8_t addr, uint8_t data){
   CC1100_ASSERT;
-//  cc1100_sendbyte( addr|CC1100_WRITE_BURST );
   cc1100_sendbyte( addr|CC1100_WRITE_SINGLE );
   cc1100_sendbyte( data );
   CC1100_DEASSERT;

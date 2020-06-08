@@ -37,6 +37,7 @@
 DisplayClass::DisplayClass() {
 	log_enabled = 0;
 	channel = 0;
+	echo_serial = true;
 }
 
 //////////////////////////////////////////////////
@@ -51,15 +52,16 @@ void DisplayClass::chr(char data)
 # define buffer_used()
 #endif
 
+/* don't change the channel in display!
 #ifdef HAS_RF_ROUTER
   channel = (DISPLAY_USB|DISPLAY_RFROUTER);
 #else
   channel = DISPLAY_USB;
 #endif
+*/
 #ifdef HAS_ETHERNET
   channel |= DISPLAY_TCP;
 #endif
-
 
 #ifdef HAS_ETHERNET
   if(channel & DISPLAY_TCP)
@@ -76,7 +78,7 @@ void DisplayClass::chr(char data)
 #endif
 
 #ifdef HAS_USB
-  if(USB_IsConnected && (channel & DISPLAY_USB)) {
+  if(USB_IsConnected && ((channel & DISPLAY_USB) || echo_serial)) {
     Serial.print(data);
 	/*
 	if(TTY_Tx_Buffer.nbytes >= TTY_BUFSIZE)
@@ -90,7 +92,7 @@ void DisplayClass::chr(char data)
 #endif
 
 #ifdef HAS_UART
-  if(channel & DISPLAY_USB) {
+  if((channel & DISPLAY_USB) || echo_serial) {
     if((TTY_Tx_Buffer.nbytes  < TTY_BUFSIZE-2) ||
        (TTY_Tx_Buffer.nbytes  < TTY_BUFSIZE && (data == '\r' || data == '\n')))
     TTY_Tx_Buffer.put(data);
@@ -235,6 +237,16 @@ void DisplayClass::hex(uint16_t h, int8_t pad, uint8_t padc)
 void DisplayClass::hex2(uint8_t h)
 {
   hex(h, 2, '0');
+}
+
+void DisplayClass::func(char *in)
+{
+  if(in[1] == 'd') {                // no echo on USB
+    echo_serial = false;
+  } else if(in[1] == 'e') {         // echo on USB
+    echo_serial = true;
+  }
+  DC('s');DH2(echo_serial);DNL();
 }
 
 #if !defined(NO_GLOBAL_INSTANCES) && !defined(NO_GLOBAL_DISPLAY)

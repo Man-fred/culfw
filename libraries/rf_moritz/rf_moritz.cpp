@@ -108,11 +108,9 @@ uint8_t RfMoritzClass::on(uint8_t onNew){
 void RfMoritzClass::init(void)
 {
   CC1100.manualReset(0);
-  //test: +10db, no PA-ramping
-  CC1100_ASSERT;
-  CC1100.cc1100_sendbyte( CC1100_PATABLE | CC1100_WRITE_SINGLE );
-  CC1100.cc1100_sendbyte(0xC3);
-  CC1100_DEASSERT;
+  //test: +10db, no PA-ramping, see cc1100.cpp, CC1100_PA[]
+  CC1100.cc1100_writeReg( CC1100_PATABLE, 0xC3);
+
 	// not in c -->
 	//CC1100.ccStrobe(CC1100_SFRX);
   //CC1100.ccStrobe(CC1100_SFTX);
@@ -125,10 +123,6 @@ void RfMoritzClass::init(void)
 	  CC1100.cc1100_sendbyte(pgm_read_byte(&MORITZ_CFG[i]));
   }
   CC1100_DEASSERT;
-  //CC1100.cc1100_writeReg(0x29, 0x59); //FSTEST  "For test only. Do not write to this register."
-  //CC1100.cc1100_writeReg(0x2C, 0x81); //TEST2
-  //CC1100.cc1100_writeReg(0x2D, 0x35); //TEST1
-  //CC1100.cc1100_writeReg(0x3E, 0xC3); //?? Readonly PATABLE?
 
   //auto? CC1100.ccStrobe( CC1100_SCAL );
   //auto? MYDELAY.my_delay_ms(4); // 4ms: Found by trial and error
@@ -332,7 +326,7 @@ void RfMoritzClass::sendraw(uint8_t *dec, int longPreamble)
 	uint8_t i=0;
 	uint8_t j=0;
 	uint8_t loop = 99;
-Serial.println(micros());  
+
 	CC1100_ASSERT;
   //res[j] = CC1100.cc1100_sendbyte(CC1100_SFTX);
 	//mst[j] = SPI.transfer(0);
@@ -358,9 +352,7 @@ Serial.println(micros());
 	res[++j] = SPI.transfer(CC1100_TXBYTES|CC1100_READ_BURST);
   mst[j] = SPI.transfer(0);
   CC1100_DEASSERT;
-Serial.println(micros());  
-
-
+  /*
   for( i = 0; i < hblen; i++) {
     Serial.print(dec[i]<0x10 ? "  " : " ");Serial.print(dec[i],HEX);
   }
@@ -377,6 +369,7 @@ Serial.println(micros());
     Serial.print(mst[i]<0x10 ? "  " : " ");Serial.print(mst[i],HEX);
   }
   Serial.println(" mst");
+	*/
   // * only debug? /Wait for sending to finish (CC1101 will go to RX state automatically
   //after sending
 
