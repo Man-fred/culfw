@@ -2,10 +2,10 @@
 Firmware for different busware.de gadgets and esp8266 
 
 CAUTION: since 11. Jun 2020 the wlan parameter are in the eeprom and must be initialized! "private.h" can be deleted.
-* Wis<SSID> 
-* Wik<wpa-key>
-* WiD<devicename>
-* WiO<ip-address ota-server>
+* Wis&lt;SSID&gt;
+* Wik&lt;wpa-key&gt;
+* WiD&lt;devicename&gt;
+* WiO&lt;ip-address ota-server&gt;
 
 For OTA functionality a webserver with php must be in the local network. After uploading the php part the update
 is initialized with command "B01" (on arduino "start with bootloader"), update.log must be writeable and then shows state and errors. 
