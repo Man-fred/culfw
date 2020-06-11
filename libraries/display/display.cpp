@@ -3,29 +3,29 @@
 
 #include "ringbuffer.h"
 #include "rf_router.h"
-/*
-#ifdef HAS_USB
-//#include "cdc.h"
-#else
-#include "serial.h"
+#ifndef ESP8266
+	#ifdef HAS_USB
+	//#include "cdc.h"
+	#else
+		#include "serial.h"
+	#endif
+	#include "led.h"
+	#include "delay.h"
+	#include "pcf8833.h"
+	#include "ttydata.h"            // callfn
+	#include "fht.h"                // fht_hc
+	#include "rf_router.h"
+	#include "clock.h"
+	#include "log.h"
 #endif
-#include "led.h"
-#include "delay.h"
-#include "pcf8833.h"
-#include "ttydata.h"            // callfn
-#include "fht.h"                // fht_hc
-#include "rf_router.h"
-#include "clock.h"
-#include "log.h"
-*/
 #ifdef HAS_PRIVATE_CHANNEL
-//#include "private_channel.h"
+  #include "private_channel.h"
 #endif
 #ifdef HAS_ETHERNET
-#include "ethernet.h"
+  #include "ethernet.h"
 #endif
 #ifdef HAS_DOGM
-//#include "dogm16x.h"
+  #include "dogm16x.h"
 #endif
 
 #include <stddef.h>
@@ -52,16 +52,16 @@ void DisplayClass::chr(char data)
 # define buffer_used()
 #endif
 
-/* don't change the channel in display!
+/* don't change the channel in DisplayClass!
 #ifdef HAS_RF_ROUTER
   channel = (DISPLAY_USB|DISPLAY_RFROUTER);
 #else
   channel = DISPLAY_USB;
 #endif
-*/
 #ifdef HAS_ETHERNET
   channel |= DISPLAY_TCP;
 #endif
+*/
 
 #ifdef HAS_ETHERNET
   if(channel & DISPLAY_TCP)
@@ -79,15 +79,16 @@ void DisplayClass::chr(char data)
 
 #ifdef HAS_USB
   if(USB_IsConnected && ((channel & DISPLAY_USB) || echo_serial)) {
-    Serial.print(data);
-	/*
-	if(TTY_Tx_Buffer.nbytes >= TTY_BUFSIZE)
-      CDC_Task();
-    TTY_Tx_Buffer.put(data);
-    if(data == '\n')
-      CDC_Task();
-    buffer_used();
-	*/
+		#ifndef ESP8266
+		  if(TTY_Tx_Buffer.nbytes >= TTY_BUFSIZE)
+				CDC_Task();
+			TTY_Tx_Buffer.put(data);
+			if(data == '\n')
+				CDC_Task();
+			buffer_used();
+		#else
+			Serial.print(data);
+		#endif
   }
 #endif
 

@@ -73,6 +73,44 @@ uint16_t FNCOLLECTIONClass::erw(uint8_t p)
   return (uint16_t)EEPROM.read(p) | ((uint16_t)EEPROM.read(p+1) << 8);
 }
 
+void FNCOLLECTIONClass::ews(uint8_t p, String data, bool commit)
+{
+  uint8_t _size = data.length();
+  for(uint8_t i=0;i<_size && i<20;i++)
+  {
+    EEPROM.write(p++,data[i]);
+  }
+  EEPROM.write(p,'\0');   //Add termination null character for String Data
+	if (commit) {
+	  EEPROM.commit();
+	}
+}
+ 
+String FNCOLLECTIONClass::ers(uint8_t p)
+{
+  char data[20]; //Max 20 Bytes
+  int len=0;
+  unsigned char k = 1;
+  while(k != '\0' && len<20)   //Read until null character
+  {    
+    k=EEPROM.read(p++);
+    data[len++]=k;
+  }
+  data[len]='\0';
+  return String(data);
+}
+
+void FNCOLLECTIONClass::display_string(uint8_t a, uint8_t cnt)
+{
+	uint8_t s = 1;
+  while(cnt-- && s>0) {
+		s = erb(a++);
+		if (s>0)
+      DC(s);
+  }
+
+}
+
 void FNCOLLECTIONClass::display_ee_bytes(uint8_t a, uint8_t cnt)
 {
   while(cnt--) {
@@ -116,6 +154,12 @@ void FNCOLLECTIONClass::read_eeprom(char *in)
     } else if(in[2] == 'p') { DU(erw(EE_IP4_TCPLINK_PORT),0);
     } else if(in[2] == 'N') { display_ee_ip4(EE_IP4_NTPSERVER);
     } else if(in[2] == 'o') { DH2(erb(EE_IP4_NTPOFFSET));
+#   ifdef ESP8266
+    } else if(in[2] == 's') { display_string(EE_WPA_SSID, EE_STR_LEN);
+    } else if(in[2] == 'k') { display_string(EE_WPA_KEY, EE_STR_LEN);
+    } else if(in[2] == 'D') { display_string(EE_NAME, EE_STR_LEN);
+    } else if(in[2] == 'O') { display_ee_ip4(EE_OTA_SERVER);
+#   endif
     }
   } else 
 #endif
@@ -186,7 +230,11 @@ void FNCOLLECTIONClass::write_eeprom(char *in)
 
 void FNCOLLECTIONClass::write_eeprom(char *in, bool commit)
 {
+#ifdef ESP8266
+  uint8_t hb[EE_STR_LEN], d = 0;
+#else
   uint8_t hb[6], d = 0;
+#endif
 
 #ifdef HAS_ETHERNET
   if(in[1] == 'i') {
@@ -203,6 +251,12 @@ void FNCOLLECTIONClass::write_eeprom(char *in, bool commit)
       extern int8_t ntp_gmtoff;
       ntp_gmtoff = hb[0];
 #endif
+#   ifdef ESP8266
+    } else if(in[2] == 's') { d=EE_STR_LEN; STRINGFUNC.fromchars(in+3,hb, EE_STR_LEN); addr=EE_WPA_SSID;
+    } else if(in[2] == 'k') { d=EE_STR_LEN; STRINGFUNC.fromchars(in+3,hb, EE_STR_LEN); addr=EE_WPA_KEY;
+    } else if(in[2] == 'D') { d=EE_STR_LEN; STRINGFUNC.fromchars(in+3,hb, EE_STR_LEN); addr=EE_NAME;
+    } else if(in[2] == 'O') { d=4; STRINGFUNC.fromip (in+3,hb,4); addr=EE_OTA_SERVER;
+#   endif
     }
     for(uint8_t i = 0; i < d; i++)
       ewb(addr++, hb[i], false);
@@ -337,7 +391,6 @@ void FNCOLLECTIONClass::ledfunc(char *in)
 // boot
 void FNCOLLECTIONClass::prepare_boot(char *in)
 {
-#ifndef esp8266
   uint8_t bl = 0;
   if(in)
     STRINGFUNC.fromhex(in+1, &bl, 1);
@@ -345,25 +398,32 @@ void FNCOLLECTIONClass::prepare_boot(char *in)
   if(bl == 0xff)             // Allow testing
     while(1);
     
-  if(bl)                     // Next reboot we'd like to jump to the bootloader.
+  if(bl) {
+  #ifndef ESP8266		         // Next reboot we'd like to jump to the bootloader. 
     ewb( EE_REQBL, 1 );      // Simply jumping to the bootloader from here
                              // wont't work. Neither helps to shutdown USB
                              // first.
-                             
-#ifdef HAS_USB
-//  USB_ShutDown();            // ??? Needed?
-#endif
-#ifdef HAS_FS
-  fs_sync(&fs);              // Sync the filesystem
-#endif
+	#else
+		Ethernet.ota();          // on ESP8266 initialize over-the-air-update
+	  return;
+	#endif
+	}
+  #ifdef HAS_USB
+  //  USB_ShutDown();            // ??? Needed?
+  #endif
+  #ifdef HAS_FS
+    fs_sync(&fs);              // Sync the filesystem
+  #endif
 
-
-//esp8266  TIMSK0 = 0;                // Disable the clock which resets the watchdog
-  cli();
-  
-  wdt_enable(WDTO_15MS);       // Make sure the watchdog is running 
-  while (1);                 // go to bed, the wathchdog will take us to reset
-#endif
+  #ifndef ESP8266
+		TIMSK0 = 0;                // Disable the clock which resets the watchdog
+		cli();
+		
+		wdt_enable(WDTO_15MS);       // Make sure the watchdog is running 
+		while (1);                 // go to bed, the wathchdog will take us to reset
+	#else
+		ESP.restart();
+	#endif
 }
 
 void FNCOLLECTIONClass::version(char *in)
@@ -371,7 +431,15 @@ void FNCOLLECTIONClass::version(char *in)
 #if defined(CUL_HW_REVISION)
   if (in[1] == 'H') {
     //DS_P( PSTR(CUL_HW_REVISION) );
-	DS(CUL_HW_REVISION);
+	  DS(CUL_HW_REVISION);
+    DNL();
+    return;
+  }
+#endif
+#if defined(VERSION_OTA)
+  // version of image
+  if (in[1] == 'I') {
+	  DS(concat(VERSION_OTA, VERSION_BOARD));
     DNL();
     return;
   }
@@ -382,7 +450,7 @@ void FNCOLLECTIONClass::version(char *in)
     DS("V " VERSION " " BOARD_ID_STR433 );
   else
 #endif
-  DS("V " VERSION " " BOARD_ID_STR);
+    DS("V " VERSION " " BOARD_ID_STR);
   DNL();
 }
 
